@@ -171,7 +171,7 @@ export function generateReleaseCalendar() {
 }
 
 export function generateWeeklyReleases(releaseCalendar, weekNumber) {
-  const i = weekNumber - 2; // 0-based from first raffle week
+  const i = weekNumber - 1; // 0-based from first raffle week
   const pick = (brand) => {
     const pool = releaseCalendar[brand];
     if (!pool || pool.length === 0) return null;
