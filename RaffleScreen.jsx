@@ -1,11 +1,9 @@
 import { useState } from "react";
-import { AVAILABLE_SIZES, HYPE_DISPLAY, resolveRaffleWin, resolveRaffleMarket } from "./data";
+import { AVAILABLE_SIZES, resolveRaffleWin, resolveRaffleMarket } from "./data";
 
 const MAX_ENTRIES   = 4;
 const PREORDER_MULT = 1.20;
-const HYPE_COLOR    = { low: "#9c9a94", medium: "#d97706", high: "#dc2626", grail: "#7c3aed" };
-const HYPE_BG       = { low: "#f2f0eb", medium: "#fef3c7", high: "#fee2e2", grail: "#ede9fe" };
-export default function RaffleScreen({ releases, cash, weekNumber, inventoryCount, inventoryCap = 50, onComplete, onSkip }) {
+export default function RaffleScreen({ releases, cash, weekNumber, inventoryCount, inventoryCap = 50, dailyMarkets = {}, onComplete, onSkip }) {
   // raffleEntries: { [releaseId]: size }
   // preorders: Set of releaseIds
   const [raffleEntries, setRaffleEntries] = useState({});
@@ -54,15 +52,15 @@ export default function RaffleScreen({ releases, cash, weekNumber, inventoryCoun
     const raffleResults = releases.map(release => {
       const size = raffleEntries[release.id];
       if (!size) return { release, size: null, won: false, marketPrice: null, isPreorder: false };
-      const won = resolveRaffleWin(release);
-      const marketPrice = won ? resolveRaffleMarket(release) : null;
+      const won = resolveRaffleWin();
+      const marketPrice = won ? resolveRaffleMarket(release, dailyMarkets) : null;
       return { release, size, won, marketPrice, isPreorder: false };
     });
 
     // Preorder results — guaranteed, full size run
     const preorderResults = [...preorders].map(id => {
       const release = releases.find(r => r.id === id);
-      const marketPrice = resolveRaffleMarket(release);
+      const marketPrice = resolveRaffleMarket(release, dailyMarkets);
       return { release, size: "full run", won: true, marketPrice, isPreorder: true };
     });
 
@@ -209,10 +207,6 @@ export default function RaffleScreen({ releases, cash, weekNumber, inventoryCoun
                   <span className="shoe-name">{release.model} — {release.colorway}</span>
                 </div>
                 <div className="raffle-badges">
-                  <span className="raffle-hype-badge"
-                    style={{ color: HYPE_COLOR[release.hype], background: HYPE_BG[release.hype] }}>
-                    {HYPE_DISPLAY[release.hype]}
-                  </span>
                   <span className="market-tag">Retail ${release.retail}</span>
                 </div>
               </div>

@@ -16,6 +16,7 @@ import {
   generateDailyMarkets,
   generateCustomers,
   generateWeeklyReleases,
+  generateReleaseCalendar,
   generateBrandTrends,
   advanceBrandTrends,
   generateStyleTrends,
@@ -64,6 +65,7 @@ export default function App() {
   const [expenseLog,       setExpenseLog]       = useState([]);
   const [raffleReleases,   setRaffleReleases]   = useState([]);
   const [rafflesDoneForWeek, setRafflesDoneForWeek] = useState(0);
+  const [releaseCalendar,  setReleaseCalendar]  = useState({});
   const [bailoutContext,   setBailoutContext]   = useState(null);
   const [recentReleaseIds, setRecentReleaseIds] = useState([]);
   const [hoursLeft,        setHoursLeft]        = useState(10);
@@ -105,6 +107,7 @@ export default function App() {
     phase, tab, dailyMarkets, prevDailyMarkets, brandTrends, styleTrends,
     cash, loanBalance, inventory, day, customers, transactions,
     missedDemand, expenseLog, raffleReleases, rafflesDoneForWeek,
+    releaseCalendar,
     bailoutContext, recentReleaseIds, hoursLeft, fakesReceived,
     featuredShoes, adActive, upgrades, keyMasterShoes,
   };
@@ -195,10 +198,11 @@ export default function App() {
   }
 
   function buildFreshState() {
-    const trends    = generateBrandTrends();
-    const styleTr   = generateStyleTrends();
-    const markets   = generateDailyMarkets(trends, styleTr);
-    const customers = generateCustomers(markets, null, 1);
+    const trends          = generateBrandTrends();
+    const styleTr         = generateStyleTrends();
+    const markets         = generateDailyMarkets(trends, styleTr);
+    const customers       = generateCustomers(markets, null, 1);
+    const releaseCalendar = generateReleaseCalendar();
     return {
       version: 2,
       phase: "day", tab: "customers",
@@ -207,6 +211,7 @@ export default function App() {
       inventory: [], day: 1, customers,
       transactions: [], missedDemand: [], expenseLog: [],
       raffleReleases: [], rafflesDoneForWeek: 0,
+      releaseCalendar,
       bailoutContext: null, recentReleaseIds: [], hoursLeft: 10,
       fakesReceived: [], featuredShoes: [], adActive: false,
       upgrades: { storagePlus50: false, storagePlus100: false, authTier: "none", hasMarketing: false, hasKeyMaster: false },
@@ -230,6 +235,7 @@ export default function App() {
     setExpenseLog(s.expenseLog);
     setRaffleReleases(s.raffleReleases);
     setRafflesDoneForWeek(s.rafflesDoneForWeek);
+    setReleaseCalendar(s.releaseCalendar ?? generateReleaseCalendar());
     setBailoutContext(s.bailoutContext);
     setRecentReleaseIds(s.recentReleaseIds);
     setHoursLeft(s.hoursLeft);
@@ -261,6 +267,7 @@ export default function App() {
     if (s.expenseLog)               setExpenseLog(s.expenseLog);
     if (s.raffleReleases)           setRaffleReleases(s.raffleReleases);
     if (s.rafflesDoneForWeek != null) setRafflesDoneForWeek(s.rafflesDoneForWeek);
+    setReleaseCalendar(s.releaseCalendar ?? generateReleaseCalendar());
     if (s.bailoutContext)           setBailoutContext(s.bailoutContext);
     if (s.recentReleaseIds)         setRecentReleaseIds(s.recentReleaseIds);
     if (s.hoursLeft        != null) setHoursLeft(s.hoursLeft);
@@ -284,6 +291,7 @@ export default function App() {
         phase, tab, dailyMarkets, prevDailyMarkets, brandTrends, styleTrends,
         cash, loanBalance, inventory, day, customers, transactions,
         missedDemand, expenseLog, raffleReleases, rafflesDoneForWeek,
+        releaseCalendar,
         bailoutContext, recentReleaseIds, hoursLeft, fakesReceived,
         featuredShoes, adActive, upgrades, keyMasterShoes,
       },
@@ -351,7 +359,7 @@ export default function App() {
 
     // Pre-generate raffle releases on week boundary
     if (nextDay >= 8 && nextDay % 7 === 1) {
-      setRaffleReleases(generateWeeklyReleases(Math.ceil(nextDay / 7)));
+      setRaffleReleases(generateWeeklyReleases(releaseCalendar, Math.ceil(nextDay / 7)));
     }
 
     setDay(d => d + 1);
@@ -779,6 +787,7 @@ export default function App() {
         weekNumber={Math.ceil(day / 7)}
         inventoryCount={inventoryCount}
         inventoryCap={effectiveInventoryCap}
+        dailyMarkets={dailyMarkets}
         onComplete={handleCompleteRaffles}
         onSkip={() => { setRecentReleaseIds([]); setRafflesDoneForWeek(Math.ceil(day / 7)); setPhase("between"); }}
       />
