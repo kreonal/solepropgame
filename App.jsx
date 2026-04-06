@@ -497,10 +497,9 @@ export default function App() {
   }
 
   // ── Raffle/preorder complete ───────────────────────────────────────────────
-  function handleCompleteRaffles(wonItems, totalCost, marketUpdates) {
+  function handleCompleteRaffles(wonItems, totalCost) {
     if (wonItems.length > 0) {
       setCash(prev => prev - totalCost);
-      setDailyMarkets(prev => ({ ...prev, ...marketUpdates }));
       const newIds = wonItems.map(i => i.shoeId);
       setRecentReleaseIds(newIds);
       setInventory(prev => {
