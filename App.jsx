@@ -528,8 +528,11 @@ export default function App() {
     setInventory(prev => {
       let inv = [...prev];
 
-      if (result.inventoryRemove) {
-        const { shoeId, size } = result.inventoryRemove;
+      // Support both legacy single fields and new arrays
+      const removes = result.inventoryRemoves ?? (result.inventoryRemove ? [result.inventoryRemove] : []);
+      const adds    = result.inventoryAdds    ?? (result.inventoryAdd    ? [result.inventoryAdd]    : []);
+
+      for (const { shoeId, size } of removes) {
         inv = inv
           .map(item =>
             item.shoeId === shoeId && item.size === size
@@ -539,8 +542,7 @@ export default function App() {
           .filter(item => item.quantity > 0);
       }
 
-      if (result.inventoryAdd) {
-        const add = result.inventoryAdd;
+      for (const add of adds) {
         const existing = inv.find(i => i.shoeId === add.shoeId && i.size === add.size);
         if (existing) {
           const totalQty  = existing.quantity + 1;
@@ -563,8 +565,8 @@ export default function App() {
     );
     setTransactions(prev => [...prev, { customerId, ...result }]);
 
-    if (result.missedShoe) {
-      const m = result.missedShoe;
+    const missedList = result.missedShoes ?? (result.missedShoe ? [result.missedShoe] : []);
+    for (const m of missedList) {
       setMissedDemand(prev => {
         const idx = prev.findIndex(d => d.shoeId === m.shoeId && d.size === m.size);
         if (idx >= 0) {

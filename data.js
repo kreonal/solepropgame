@@ -492,11 +492,27 @@ export function generateSellChanceBuyers(inventory, dailyMarkets, brandTrends, s
       if (!shoe) continue;
       const adj = getSizeAdjust(item.size);
       const marketRange = { low: range.low + adj, mid: range.mid + adj, high: range.high + adj };
+      // Roll for additional items the buyer wants (other inventory items)
+      const itemCount = rollItemCount();
+      const itemsWanted = [{ shoe, size: item.size, marketRange }];
+      const otherItems = inventory.filter(other => !(other.shoeId === item.shoeId && other.size === item.size));
+      for (let k = 1; k < itemCount && k <= otherItems.length; k++) {
+        const other = otherItems[Math.floor(Math.random() * otherItems.length)];
+        const otherShoe = CATALOG.find(s => s.id === other.shoeId) ?? RAFFLE_CATALOG.find(s => s.id === other.shoeId);
+        if (!otherShoe) continue;
+        const otherAdj = getSizeAdjust(other.size);
+        const otherRange = dailyMarkets[other.shoeId];
+        const otherMarket = otherRange
+          ? { low: otherRange.low + otherAdj, mid: otherRange.mid + otherAdj, high: otherRange.high + otherAdj }
+          : { low: Math.round((otherShoe.baseMarket + otherAdj) * 0.88), mid: otherShoe.baseMarket + otherAdj, high: Math.round((otherShoe.baseMarket + otherAdj) * 1.12) };
+        itemsWanted.push({ shoe: otherShoe, size: other.size, marketRange: otherMarket });
+      }
       buyers.push({
         id: idCounter++,
         type: "BUY",
         personality: PERSONALITY_KEYS[Math.floor(Math.random() * PERSONALITY_KEYS.length)],
         shoe, size: item.size, marketRange,
+        items: itemsWanted,
         wantedShoe: null, wantedSize: null,
         served: false, outcome: null, isFake: false,
         sellChanceDerived: true, marketingBoosted: false,
@@ -519,6 +535,7 @@ export function generateSellChanceBuyers(inventory, dailyMarkets, brandTrends, s
         type: "BUY",
         personality: PERSONALITY_KEYS[Math.floor(Math.random() * PERSONALITY_KEYS.length)],
         shoe, size: item.size, marketRange,
+        items: [{ shoe, size: item.size, marketRange }],
         wantedShoe: null, wantedSize: null,
         served: false, outcome: null, isFake: false,
         sellChanceDerived: true, marketingBoosted: true,
@@ -551,6 +568,14 @@ function getMarketRange(dailyMarkets, shoe, size) {
   return { low: Math.round(mid * 0.88), mid, high: Math.round(mid * 1.12) };
 }
 
+// Weighted roll: ~70% 1 item, ~20% 2 items, ~10% 3 items
+function rollItemCount() {
+  const r = Math.random();
+  if (r < 0.70) return 1;
+  if (r < 0.90) return 2;
+  return 3;
+}
+
 // Day 1: SELL customers only — player builds inventory by buying from them.
 // Day 2+: SELL + TRADE only. BUY customers come from generateSellChanceBuyers.
 // Featured shoe customers (guaranteed BUY) are still appended here.
@@ -562,7 +587,8 @@ export function generateCustomers(dailyMarkets, inventoryItems = null, day = 1, 
       const size        = AVAILABLE_SIZES[Math.floor(Math.random() * AVAILABLE_SIZES.length)];
       const marketRange = getMarketRange(dailyMarkets, shoe, size);
       const isFake      = Math.random() < 0.08;
-      return { id: i + 1, type: "SELL", personality, shoe, size, marketRange, wantedShoe: null, wantedSize: null, served: false, outcome: null, isFake };
+      const items       = [{ shoe, size, marketRange, isFake }];
+      return { id: i + 1, type: "SELL", personality, shoe, size, marketRange, items, wantedShoe: null, wantedSize: null, served: false, outcome: null, isFake };
     });
   }
 
@@ -590,17 +616,36 @@ export function generateCustomers(dailyMarkets, inventoryItems = null, day = 1, 
     const size        = AVAILABLE_SIZES[Math.floor(Math.random() * AVAILABLE_SIZES.length)];
     const marketRange = getMarketRange(dailyMarkets, shoe, size);
 
-    let wantedShoe = null;
-    let wantedSize = null;
-    let wantedMarketRange = null;
-    if (type === "TRADE") {
+    let wantedShoe = null, wantedSize = null, wantedMarketRange = null;
+    let items = null;
+
+    if (type === "SELL") {
+      const itemCount = rollItemCount();
+      items = [];
+      for (let k = 0; k < itemCount; k++) {
+        const s  = k === 0 ? shoe : CATALOG[Math.floor(Math.random() * CATALOG.length)];
+        const sz = k === 0 ? size : AVAILABLE_SIZES[Math.floor(Math.random() * AVAILABLE_SIZES.length)];
+        const mr = k === 0 ? marketRange : getMarketRange(dailyMarkets, s, sz);
+        items.push({ shoe: s, size: sz, marketRange: mr, isFake: Math.random() < 0.08 });
+      }
+    } else if (type === "TRADE") {
+      const itemCount = rollItemCount();
+      items = [];
+      for (let k = 0; k < itemCount; k++) {
+        const s  = k === 0 ? shoe : CATALOG[Math.floor(Math.random() * CATALOG.length)];
+        const sz = k === 0 ? size : AVAILABLE_SIZES[Math.floor(Math.random() * AVAILABLE_SIZES.length)];
+        const mr = k === 0 ? marketRange : getMarketRange(dailyMarkets, s, sz);
+        items.push({ shoe: s, size: sz, marketRange: mr, isFake: Math.random() < 0.08 });
+      }
       const wantedPairs = stockedPairs.filter(p => p.shoe.id !== shoe.id);
-      if (!wantedPairs.length) return null; // skip if no valid trade target
+      if (!wantedPairs.length) return null;
       const pair = wantedPairs[Math.floor(Math.random() * wantedPairs.length)];
       wantedShoe = pair.shoe;
       wantedSize = pair.size;
       wantedMarketRange = getMarketRange(dailyMarkets, wantedShoe, wantedSize);
     }
+
+    const isFake = items ? items.some(it => it.isFake) : Math.random() < 0.08;
 
     return {
       id: i + 1,
@@ -609,12 +654,13 @@ export function generateCustomers(dailyMarkets, inventoryItems = null, day = 1, 
       shoe,
       size,
       marketRange,
+      items,
       wantedShoe,
       wantedSize,
       wantedMarketRange,
       served: false,
       outcome: null,
-      isFake: Math.random() < 0.08,
+      isFake,
       marketingBoosted: false,
     };
   }).filter(Boolean);
@@ -625,6 +671,7 @@ export function generateCustomers(dailyMarkets, inventoryItems = null, day = 1, 
     if (!shoe) return [];
     const personality    = PERSONALITY_KEYS[Math.floor(Math.random() * PERSONALITY_KEYS.length)];
     const marketRange    = getMarketRange(dailyMarkets, shoe, f.size);
+    const items          = [{ shoe, size: f.size, marketRange }];
     return [{
       id: types.length + i + 1,
       type: "BUY",
@@ -632,6 +679,7 @@ export function generateCustomers(dailyMarkets, inventoryItems = null, day = 1, 
       shoe,
       size: f.size,
       marketRange,
+      items,
       wantedShoe: null,
       wantedSize: null,
       wantedMarketRange: null,

@@ -43,12 +43,27 @@ export default function InteractionModal({
   })();
   const { low: mktLow, mid: mktMid, high: mktHigh } = resolvedRange;
 
+  // Normalize items array — fallback for legacy customers without items
+  const customerItems = customer.items ?? [{ shoe, size, marketRange: resolvedRange, isFake: customer.isFake }];
+  const isMultiItem = customerItems.length > 1;
+
   const effectiveInspectTime =
     authTier === "employee" ? 0 :
     authTier === "app"      ? TIME_INSPECT / 2 :
     TIME_INSPECT;
 
-  // All pricing anchored to market midpoint
+  // Per-item max/floor, then summed for total negotiation
+  function itemBuyMax(item) {
+    return Math.round(item.marketRange.mid * (customer.marketingBoosted ? traits.buyMaxMult * 1.12 : traits.buyMaxMult));
+  }
+  function itemSellFloor(item) {
+    return Math.round(item.marketRange.mid * traits.sellFloorMult);
+  }
+  function itemSellAsk(item) {
+    return Math.round(item.marketRange.mid * traits.sellAskMult);
+  }
+
+  // Single-item helpers (used by legacy single-item logic)
   const buyMaxPrice    = Math.round(mktMid * (customer.marketingBoosted ? traits.buyMaxMult * 1.12 : traits.buyMaxMult));
   const sellFloorPrice = Math.round(mktMid * traits.sellFloorMult);
 
@@ -68,31 +83,58 @@ export default function InteractionModal({
   const inspectionTimeCost = TIME_SELL + (inspection === "close" ? effectiveInspectTime : 0);
 
   // ── BUY state ──────────────────────────────────────────────────────────────
-  const inventoryItem = inventory.find(i => i.shoeId === shoe.id && i.size === size);
+  // Resolve inventory items for each requested item
+  const buyItemsResolved = customerItems.map(ci => ({
+    ...ci,
+    inventoryItem: inventory.find(i => i.shoeId === ci.shoe.id && i.size === ci.size) ?? null,
+  }));
+  const buyInStock = buyItemsResolved.filter(ci => ci.inventoryItem && !ci.inventoryItem.isFake);
+  const totalBuyMax = buyInStock.reduce((sum, ci) => sum + itemBuyMax(ci), 0);
+  const totalListPrice = buyInStock.reduce((sum, ci) => sum + ci.inventoryItem.listPrice, 0);
+
+  // Single-item compat
+  const inventoryItem = buyItemsResolved[0]?.inventoryItem ?? null;
+
   const [buyOfferInput, setBuyOfferInput] = useState(
-    inventoryItem ? String(inventoryItem.listPrice) : ""
+    isMultiItem ? String(totalListPrice) : (inventoryItem ? String(inventoryItem.listPrice) : "")
   );
   const [buyCounter, setBuyCounter] = useState(null);
   const [buyRound,   setBuyRound]   = useState(0);
   const [buyMsg,     setBuyMsg]     = useState("");
 
   function tryBuyPrice(price) {
-    if (price <= buyMaxPrice) {
-      commitResult({
-        cashDelta: price,
-        inventoryRemove: { shoeId: shoe.id, size },
-        inventoryAdd: null,
-        outcome: `Sold $${price}`,
-        label: `Sold ${shoe.brand} ${shoe.model} ${shoe.colorway} Sz ${size} for $${price}`,
-        timeCost: TIME_BUY,
-      });
+    const maxPrice = isMultiItem ? totalBuyMax : buyMaxPrice;
+    if (price <= maxPrice) {
+      if (isMultiItem) {
+        const removes = buyInStock.map(ci => ({ shoeId: ci.shoe.id, size: ci.size }));
+        const label = buyInStock.length === 1
+          ? `Sold ${buyInStock[0].shoe.brand} ${buyInStock[0].shoe.model} ${buyInStock[0].shoe.colorway} Sz ${buyInStock[0].size} for $${price}`
+          : `Sold ${buyInStock.length} items for $${price}`;
+        commitResult({
+          cashDelta: price,
+          inventoryRemoves: removes,
+          inventoryAdds: [],
+          outcome: `Sold $${price}`,
+          label,
+          timeCost: TIME_BUY,
+        });
+      } else {
+        commitResult({
+          cashDelta: price,
+          inventoryRemoves: [{ shoeId: shoe.id, size }],
+          inventoryAdds: [],
+          outcome: `Sold $${price}`,
+          label: `Sold ${shoe.brand} ${shoe.model} ${shoe.colorway} Sz ${size} for $${price}`,
+          timeCost: TIME_BUY,
+        });
+      }
     } else if (traits.haggles && buyRound < traits.haggleRounds) {
-      setBuyCounter(buyMaxPrice);
+      setBuyCounter(maxPrice);
       setBuyRound(r => r + 1);
-      setBuyMsg(`They counter at $${buyMaxPrice}.`);
+      setBuyMsg(`They counter at $${maxPrice}.`);
     } else {
       commitResult({
-        cashDelta: 0, inventoryRemove: null, inventoryAdd: null,
+        cashDelta: 0, inventoryRemoves: [], inventoryAdds: [],
         outcome: "Walked", label: `BUY customer walked — asked too much`,
         timeCost: TIME_BUY,
       });
@@ -100,20 +142,38 @@ export default function InteractionModal({
   }
 
   function handleAcceptCounter() {
-    commitResult({
-      cashDelta: buyCounter,
-      inventoryRemove: { shoeId: shoe.id, size },
-      inventoryAdd: null,
-      outcome: `Sold $${buyCounter}`,
-      label: `Sold ${shoe.brand} ${shoe.model} ${shoe.colorway} Sz ${size} for $${buyCounter}`,
-      timeCost: TIME_BUY,
-    });
+    if (isMultiItem) {
+      const removes = buyInStock.map(ci => ({ shoeId: ci.shoe.id, size: ci.size }));
+      const label = buyInStock.length === 1
+        ? `Sold ${buyInStock[0].shoe.brand} ${buyInStock[0].shoe.model} ${buyInStock[0].shoe.colorway} Sz ${buyInStock[0].size} for $${buyCounter}`
+        : `Sold ${buyInStock.length} items for $${buyCounter}`;
+      commitResult({
+        cashDelta: buyCounter,
+        inventoryRemoves: removes,
+        inventoryAdds: [],
+        outcome: `Sold $${buyCounter}`,
+        label,
+        timeCost: TIME_BUY,
+      });
+    } else {
+      commitResult({
+        cashDelta: buyCounter,
+        inventoryRemoves: [{ shoeId: shoe.id, size }],
+        inventoryAdds: [],
+        outcome: `Sold $${buyCounter}`,
+        label: `Sold ${shoe.brand} ${shoe.model} ${shoe.colorway} Sz ${size} for $${buyCounter}`,
+        timeCost: TIME_BUY,
+      });
+    }
   }
 
   // ── SELL state ─────────────────────────────────────────────────────────────
-  const initAsk = Math.round(mktMid * traits.sellAskMult);
+  const totalInitAsk   = customerItems.reduce((sum, ci) => sum + itemSellAsk(ci), 0);
+  const totalSellFloor = customerItems.reduce((sum, ci) => sum + itemSellFloor(ci), 0);
+  const initAsk = Math.round(mktMid * traits.sellAskMult); // single-item compat
+
   const [sellOfferInput, setSellOfferInput] = useState("");
-  const [sellAsk,        setSellAsk]        = useState(initAsk);
+  const [sellAsk,        setSellAsk]        = useState(isMultiItem ? totalInitAsk : initAsk);
   const [sellRound,      setSellRound]      = useState(0);
   const [sellMsg,        setSellMsg]        = useState("");
 
@@ -121,29 +181,51 @@ export default function InteractionModal({
     const num = Number(sellOfferInput);
     if (!num || num <= 0) return;
 
-    if (num >= sellFloorPrice) {
-      const newItem = {
-        shoeId: shoe.id, brand: shoe.brand, model: shoe.model,
-        colorway: shoe.colorway, size, quantity: 1,
-        avgPurchasePrice: num, listPrice: mktMid,
-        isFake: inspection === "quick" && customer.isFake,
-        daysListed: 0,
-      };
-      commitResult({
-        cashDelta: -num, inventoryRemove: null, inventoryAdd: newItem,
-        outcome: `Bought $${num}`,
-        label: `Bought ${shoe.brand} ${shoe.model} ${shoe.colorway} Sz ${size} for $${num}`,
-        timeCost: inspectionTimeCost,
-      });
+    const floorPrice = isMultiItem ? totalSellFloor : sellFloorPrice;
+
+    if (num >= floorPrice) {
+      if (isMultiItem) {
+        const adds = customerItems.map((ci, k) => ({
+          shoeId: ci.shoe.id, brand: ci.shoe.brand, model: ci.shoe.model,
+          colorway: ci.shoe.colorway, size: ci.size, quantity: 1,
+          avgPurchasePrice: Math.round(num / customerItems.length),
+          listPrice: ci.marketRange.mid,
+          isFake: inspection === "quick" && ci.isFake,
+          daysListed: 0,
+        }));
+        const label = customerItems.length === 1
+          ? `Bought ${customerItems[0].shoe.brand} ${customerItems[0].shoe.model} ${customerItems[0].shoe.colorway} Sz ${customerItems[0].size} for $${num}`
+          : `Bought ${customerItems.length} items for $${num}`;
+        commitResult({
+          cashDelta: -num, inventoryRemoves: [], inventoryAdds: adds,
+          outcome: `Bought $${num}`,
+          label,
+          timeCost: inspectionTimeCost,
+        });
+      } else {
+        const newItem = {
+          shoeId: shoe.id, brand: shoe.brand, model: shoe.model,
+          colorway: shoe.colorway, size, quantity: 1,
+          avgPurchasePrice: num, listPrice: mktMid,
+          isFake: inspection === "quick" && customer.isFake,
+          daysListed: 0,
+        };
+        commitResult({
+          cashDelta: -num, inventoryRemoves: [], inventoryAdds: [newItem],
+          outcome: `Bought $${num}`,
+          label: `Bought ${shoe.brand} ${shoe.model} ${shoe.colorway} Sz ${size} for $${num}`,
+          timeCost: inspectionTimeCost,
+        });
+      }
     } else if (traits.haggles && sellRound < traits.haggleRounds) {
-      const newAsk = Math.max(sellFloorPrice, Math.round(sellAsk * 0.96));
+      const newAsk = Math.max(floorPrice, Math.round(sellAsk * 0.96));
       setSellAsk(newAsk);
       setSellRound(r => r + 1);
       setSellOfferInput("");
       setSellMsg(`They come down to $${newAsk}. Make another offer.`);
     } else {
       commitResult({
-        cashDelta: 0, inventoryRemove: null, inventoryAdd: null,
+        cashDelta: 0, inventoryRemoves: [], inventoryAdds: [],
         outcome: "Walked", label: `SELL customer walked — offer too low`,
         timeCost: inspectionTimeCost,
       });
@@ -151,16 +233,22 @@ export default function InteractionModal({
   }
 
   function handlePassOnSell() {
+    const label = isMultiItem
+      ? `Passed on ${customerItems.length} items`
+      : `Passed on ${shoe.brand} ${shoe.model} ${shoe.colorway} Sz ${size}`;
     commitResult({
-      cashDelta: 0, inventoryRemove: null, inventoryAdd: null,
+      cashDelta: 0, inventoryRemoves: [], inventoryAdds: [],
       outcome: "Passed",
-      label: `Passed on ${shoe.brand} ${shoe.model} ${shoe.colorway} Sz ${size}`,
+      label,
       timeCost: inspectionTimeCost,
     });
   }
 
   // ── TRADE state ────────────────────────────────────────────────────────────
-  const theirMarket  = mktMid;
+  // Combined market value of all items customer brings
+  const combinedTheirMarket = customerItems.reduce((sum, ci) => sum + ci.marketRange.mid, 0);
+  const theirMarket  = combinedTheirMarket; // alias used below
+
   const wantedRange  = customer.wantedMarketRange ?? (() => {
     const wantedBase = dailyMarkets[customer.wantedShoe?.id];
     const adj        = getSizeAdjust(customer.wantedSize ?? 10);
@@ -184,21 +272,24 @@ export default function InteractionModal({
     const maxCashAdj = wantedMarket - theirMarket * traits.sellFloorMult;
 
     if (cashAdj <= maxCashAdj) {
-      const newItem = {
-        shoeId: shoe.id, brand: shoe.brand, model: shoe.model,
-        colorway: shoe.colorway, size, quantity: 1,
-        avgPurchasePrice: Math.max(0, theirMarket - cashAdj),
-        listPrice: theirMarket,
-        isFake: inspection === "quick" && customer.isFake,
+      const adds = customerItems.map(ci => ({
+        shoeId: ci.shoe.id, brand: ci.shoe.brand, model: ci.shoe.model,
+        colorway: ci.shoe.colorway, size: ci.size, quantity: 1,
+        avgPurchasePrice: Math.max(0, Math.round((theirMarket - cashAdj) / customerItems.length)),
+        listPrice: ci.marketRange.mid,
+        isFake: inspection === "quick" && ci.isFake,
         daysListed: 0,
-      };
+      }));
       const wantedItem = inventory.find(i => i.shoeId === customer.wantedShoe.id && i.size === customer.wantedSize);
+      const theyBringing = customerItems.length === 1
+        ? `${customerItems[0].shoe.model} Sz ${customerItems[0].size}`
+        : `${customerItems.length} items`;
       commitResult({
         cashDelta: cashAdj,
-        inventoryRemove: { shoeId: wantedItem.shoeId, size: wantedItem.size },
-        inventoryAdd: newItem,
+        inventoryRemoves: [{ shoeId: wantedItem.shoeId, size: wantedItem.size }],
+        inventoryAdds: adds,
         outcome: "Traded",
-        label: `Traded your ${customer.wantedShoe.model} Sz ${customer.wantedSize} for their ${shoe.model} Sz ${size}${cashAdj !== 0 ? ` (${cashAdj > 0 ? "+" : ""}$${cashAdj})` : ""}`,
+        label: `Traded your ${customer.wantedShoe.model} Sz ${customer.wantedSize} for their ${theyBringing}${cashAdj !== 0 ? ` (${cashAdj > 0 ? "+" : ""}$${cashAdj})` : ""}`,
         timeCost: inspectionTimeCost,
       });
     } else {
@@ -208,7 +299,7 @@ export default function InteractionModal({
 
   function handlePassOnTrade() {
     commitResult({
-      cashDelta: 0, inventoryRemove: null, inventoryAdd: null,
+      cashDelta: 0, inventoryRemoves: [], inventoryAdds: [],
       outcome: "Passed",
       label: `Passed on trade for ${shoe.brand} ${shoe.model} ${shoe.colorway} Sz ${size}`,
       timeCost: inspectionTimeCost,
@@ -218,7 +309,7 @@ export default function InteractionModal({
   // ── Result screen ─────────────────────────────────────────────────────────
   function renderResult() {
     const { result } = pendingResult;
-    const { outcome, cashDelta, timeCost } = result;
+    const { outcome, cashDelta, timeCost, label } = result;
 
     let statusCls = "txn-result-neutral";
     if (cashDelta > 0)                   statusCls = "txn-result-positive";
@@ -232,8 +323,7 @@ export default function InteractionModal({
         <div className={`txn-result-outcome ${statusCls}`}>{outcome}</div>
 
         <div className="txn-result-shoe">
-          <div className="txn-result-shoe-name">{shoe.brand} {shoe.model} — {shoe.colorway}</div>
-          <div className="txn-result-shoe-size">Size {size}</div>
+          <div className="txn-result-shoe-name">{label}</div>
         </div>
 
         <div className="txn-result-stats">
@@ -265,22 +355,42 @@ export default function InteractionModal({
       : authTier === "app"
       ? `Auth app inspects · costs ${(TIME_SELL + effectiveInspectTime).toFixed(2)}h total`
       : `Authenticate shoes · costs 1.0h total`;
+    const hasFake = customerItems.some(ci => ci.isFake);
 
     return (
       <div className="modal-section">
-        <p className="modal-shoe-name">{shoe.brand} {shoe.model} — {shoe.colorway}</p>
-        <p className="modal-size">Size {size}</p>
+        {isMultiItem ? (
+          <>
+            <p className="modal-shoe-name">{customerItems.length} items</p>
+            <div className="multi-item-list">
+              {customerItems.map((ci, k) => (
+                <div key={k} className="multi-item-row">
+                  <span className="multi-item-name">{ci.shoe.brand} {ci.shoe.model} — {ci.shoe.colorway}</span>
+                  <span className="multi-item-size">Sz {ci.size}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="modal-shoe-name">{shoe.brand} {shoe.model} — {shoe.colorway}</p>
+            <p className="modal-size">Size {size}</p>
+          </>
+        )}
         <p className="inspection-prompt">How do you want to handle this?</p>
         <div className="inspection-options">
           <button
             className="inspection-btn inspection-close"
             disabled={!canInspect}
             onClick={() => {
-              if (customer.isFake) {
+              if (hasFake) {
+                const fakeItems = customerItems.filter(ci => ci.isFake);
                 commitResult({
-                  cashDelta: 0, inventoryRemove: null, inventoryAdd: null,
+                  cashDelta: 0, inventoryRemoves: [], inventoryAdds: [],
                   outcome: "Fake — Rejected",
-                  label: `Rejected fake ${shoe.brand} ${shoe.model} ${shoe.colorway} Sz ${size}`,
+                  label: fakeItems.length === customerItems.length
+                    ? `Rejected fake ${shoe.brand} ${shoe.model} ${shoe.colorway} Sz ${size}`
+                    : `Rejected — fake found in batch of ${customerItems.length}`,
                   timeCost: TIME_SELL + effectiveInspectTime,
                 });
               } else {
@@ -302,9 +412,11 @@ export default function InteractionModal({
           <button
             className="inspection-btn inspection-pass"
             onClick={() => commitResult({
-              cashDelta: 0, inventoryRemove: null, inventoryAdd: null,
+              cashDelta: 0, inventoryRemoves: [], inventoryAdds: [],
               outcome: "Not Interested",
-              label: `Not interested in ${shoe.brand} ${shoe.model} ${shoe.colorway} Sz ${size}`,
+              label: isMultiItem
+                ? `Not interested in ${customerItems.length} items`
+                : `Not interested in ${shoe.brand} ${shoe.model} ${shoe.colorway} Sz ${size}`,
               timeCost: 0,
             })}
           >
@@ -323,18 +435,40 @@ export default function InteractionModal({
 
   // ── BUY render ─────────────────────────────────────────────────────────────
   function renderBuy() {
-    if (!inventoryItem) {
+    // If none of the requested items are in stock, send them off
+    if (buyInStock.length === 0) {
+      const missedShoes = buyItemsResolved.map(ci => ({
+        shoeId: ci.shoe.id, brand: ci.shoe.brand, model: ci.shoe.model,
+        colorway: ci.shoe.colorway, size: ci.size,
+      }));
       return (
         <div className="modal-section">
-          <p className="modal-shoe-name">{shoe.brand} {shoe.model} — {shoe.colorway}</p>
-          <p className="modal-size">Size {size}</p>
-          <p className="no-stock-msg">You don't have this in stock.</p>
+          {isMultiItem ? (
+            <>
+              <p className="modal-shoe-name">{customerItems.length} items wanted</p>
+              <div className="multi-item-list">
+                {buyItemsResolved.map((ci, k) => (
+                  <div key={k} className="multi-item-row">
+                    <span className="multi-item-name">{ci.shoe.brand} {ci.shoe.model} — {ci.shoe.colorway}</span>
+                    <span className="multi-item-size">Sz {ci.size}</span>
+                    <span className="multi-item-status out">Out of stock</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="modal-shoe-name">{shoe.brand} {shoe.model} — {shoe.colorway}</p>
+              <p className="modal-size">Size {size}</p>
+              <p className="no-stock-msg">{inventoryItem?.isFake ? "This pair is a fake — it cannot be sold." : "You don't have this in stock."}</p>
+            </>
+          )}
           <button className="secondary-btn" onClick={() =>
             commitResult({
-              cashDelta: 0, inventoryRemove: null, inventoryAdd: null,
+              cashDelta: 0, inventoryRemoves: [], inventoryAdds: [],
               outcome: "No stock",
-              label: `No stock for ${shoe.model} Sz ${size}`,
-              missedShoe: { shoeId: shoe.id, brand: shoe.brand, model: shoe.model, colorway: shoe.colorway, size },
+              label: isMultiItem ? `No stock for ${customerItems.length} requested items` : `No stock for ${shoe.model} Sz ${size}`,
+              missedShoes,
               timeCost: 0,
             })
           }>
@@ -344,27 +478,74 @@ export default function InteractionModal({
       );
     }
 
-    if (inventoryItem.isFake) {
+    if (isMultiItem) {
+      const effectiveTotal = buyCounter ?? (Number(buyOfferInput) || totalListPrice);
+      const totalCost = buyInStock.reduce((sum, ci) => sum + ci.inventoryItem.avgPurchasePrice, 0);
+      const profitPct = totalCost > 0 ? ((effectiveTotal - totalCost) / totalCost) * 100 : null;
+
       return (
         <div className="modal-section">
-          <p className="modal-shoe-name">{shoe.brand} {shoe.model} — {shoe.colorway}</p>
-          <p className="modal-size">Size {size}</p>
-          <p className="no-stock-msg">This pair is a fake — it cannot be sold to customers.</p>
-          <button className="secondary-btn" onClick={() =>
-            commitResult({
-              cashDelta: 0, inventoryRemove: null, inventoryAdd: null,
-              outcome: "No stock",
-              label: `Fake item — couldn't sell ${shoe.model} Sz ${size}`,
-              missedShoe: { shoeId: shoe.id, brand: shoe.brand, model: shoe.model, colorway: shoe.colorway, size },
-              timeCost: 0,
-            })
-          }>
-            Send Them Off
-          </button>
+          <p className="modal-shoe-name">{buyInStock.length} item{buyInStock.length > 1 ? "s" : ""} wanted</p>
+          <div className="multi-item-list">
+            {buyItemsResolved.map((ci, k) => {
+              const inStock = ci.inventoryItem && !ci.inventoryItem.isFake;
+              return (
+                <div key={k} className="multi-item-row">
+                  <span className="multi-item-name">{ci.shoe.brand} {ci.shoe.model} — {ci.shoe.colorway}</span>
+                  <span className="multi-item-size">Sz {ci.size}</span>
+                  <span className={`multi-item-status ${inStock ? "in" : "out"}`}>{inStock ? `$${ci.inventoryItem.listPrice}` : "Out of stock"}</span>
+                </div>
+              );
+            })}
+          </div>
+          <div className="price-grid">
+            <div className="price-cell">
+              <div className="price-label">Total Value</div>
+              <div className="price-value market-range">${buyInStock.reduce((s, ci) => s + ci.marketRange.low, 0)}–${buyInStock.reduce((s, ci) => s + ci.marketRange.high, 0)}</div>
+            </div>
+            <div className="price-cell">
+              <div className="price-label">List Total</div>
+              <div className="price-value">${totalListPrice}</div>
+            </div>
+            <div className="price-cell">
+              <div className="price-label">Cost Total</div>
+              <div className="price-value">${totalCost}</div>
+            </div>
+          </div>
+          <ProfitBadge pct={profitPct} />
+          {buyCounter ? (
+            <>
+              <p className="counter-msg">{buyMsg}</p>
+              <div className="offer-row">
+                <button className="primary-btn" onClick={handleAcceptCounter}>Accept ${buyCounter}</button>
+                <button className="secondary-btn" onClick={() =>
+                  commitResult({ cashDelta: 0, inventoryRemoves: [], inventoryAdds: [], outcome: "Walked", label: `BUY customer walked after counter`, timeCost: TIME_BUY })
+                }>Decline (They Walk)</button>
+              </div>
+            </>
+          ) : (
+            <>
+              {buyMsg && <p className="counter-msg">{buyMsg}</p>}
+              <div className="offer-row">
+                <button className="primary-btn" onClick={() => tryBuyPrice(totalListPrice)}>Ring Up (${totalListPrice})</button>
+              </div>
+              <div className="custom-offer-row">
+                <span>Custom total: $</span>
+                <input
+                  type="number"
+                  value={buyOfferInput}
+                  onChange={e => setBuyOfferInput(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && tryBuyPrice(Number(buyOfferInput))}
+                />
+                <button onClick={() => tryBuyPrice(Number(buyOfferInput))}>Offer</button>
+              </div>
+            </>
+          )}
         </div>
       );
     }
 
+    // Single-item BUY (original flow)
     const effectivePrice = buyCounter ?? (Number(buyOfferInput) || inventoryItem.listPrice);
     const profitPct = ((effectivePrice - inventoryItem.avgPurchasePrice) / inventoryItem.avgPurchasePrice) * 100;
 
@@ -399,7 +580,7 @@ export default function InteractionModal({
               </button>
               <button className="secondary-btn" onClick={() =>
                 commitResult({
-                  cashDelta: 0, inventoryRemove: null, inventoryAdd: null,
+                  cashDelta: 0, inventoryRemoves: [], inventoryAdds: [],
                   outcome: "Walked", label: `BUY customer walked after counter`,
                   timeCost: TIME_BUY,
                 })
@@ -434,22 +615,44 @@ export default function InteractionModal({
 
   // ── SELL render ────────────────────────────────────────────────────────────
   function renderSell() {
-    const offer     = Number(sellOfferInput);
-    const profitPct = offer > 0 ? ((mktMid - offer) / mktMid) * 100 : null;
+    const offer       = Number(sellOfferInput);
+    const totalMktMid = customerItems.reduce((s, ci) => s + ci.marketRange.mid, 0);
+    const profitPct   = offer > 0 ? ((totalMktMid - offer) / totalMktMid) * 100 : null;
 
     return (
       <div className="modal-section">
-        <p className="modal-shoe-name">{shoe.brand} {shoe.model} — {shoe.colorway}</p>
-        <p className="modal-size">Size {size}</p>
+        {isMultiItem ? (
+          <>
+            <p className="modal-shoe-name">{customerItems.length} items</p>
+            <div className="multi-item-list">
+              {customerItems.map((ci, k) => (
+                <div key={k} className="multi-item-row">
+                  <span className="multi-item-name">{ci.shoe.brand} {ci.shoe.model} — {ci.shoe.colorway}</span>
+                  <span className="multi-item-size">Sz {ci.size}</span>
+                  <span className="multi-item-mkt">${ci.marketRange.low}–${ci.marketRange.high}</span>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="modal-shoe-name">{shoe.brand} {shoe.model} — {shoe.colorway}</p>
+            <p className="modal-size">Size {size}</p>
+          </>
+        )}
         {inspection === "close" && <div className="inspection-tag close">Closely Inspected</div>}
 
         <div className="price-grid">
           <div className="price-cell">
-            <div className="price-label">Est. Value</div>
-            <div className="price-value market-range">${mktLow}–${mktHigh}</div>
+            <div className="price-label">{isMultiItem ? "Total Value" : "Est. Value"}</div>
+            <div className="price-value market-range">
+              {isMultiItem
+                ? `$${customerItems.reduce((s, ci) => s + ci.marketRange.low, 0)}–$${customerItems.reduce((s, ci) => s + ci.marketRange.high, 0)}`
+                : `$${mktLow}–${mktHigh}`}
+            </div>
           </div>
           <div className="price-cell">
-            <div className="price-label">Asking</div>
+            <div className="price-label">{isMultiItem ? "Total Asking" : "Asking"}</div>
             <div className="price-value">${sellAsk}</div>
           </div>
         </div>
@@ -462,7 +665,7 @@ export default function InteractionModal({
           <>
             <ProfitBadge pct={profitPct} />
             <div className="custom-offer-row">
-              <span>Your offer: $</span>
+              <span>{isMultiItem ? "Your total offer: $" : "Your offer: $"}</span>
               <input
                 type="number"
                 value={sellOfferInput}
@@ -484,15 +687,32 @@ export default function InteractionModal({
   function renderTrade() {
     const wantedItem = inventory.find(i => i.shoeId === customer.wantedShoe.id && i.size === customer.wantedSize);
 
+    const theyBringingSection = isMultiItem ? (
+      <div>
+        <div className="trade-summary-label">They're bringing ({customerItems.length} items · ~${theirMarket} total)</div>
+        <div className="multi-item-list">
+          {customerItems.map((ci, k) => (
+            <div key={k} className="multi-item-row">
+              <span className="multi-item-name">{ci.shoe.brand} {ci.shoe.model} — {ci.shoe.colorway}</span>
+              <span className="multi-item-size">Sz {ci.size}</span>
+              <span className="multi-item-mkt">~${ci.marketRange.mid}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    ) : (
+      <div>
+        <div className="trade-summary-label">They're bringing</div>
+        <div className="trade-summary-shoe">{shoe.brand} {shoe.model}</div>
+        <div className="trade-summary-mkt">{shoe.colorway} · Sz {size} · ${mktLow}–${mktHigh}</div>
+      </div>
+    );
+
     if (!wantedItem) {
       return (
         <div className="modal-section">
           <div className="trade-summary">
-            <div>
-              <div className="trade-summary-label">They're bringing</div>
-              <div className="trade-summary-shoe">{shoe.brand} {shoe.model}</div>
-              <div className="trade-summary-mkt">{shoe.colorway} · Sz {size} · ${mktLow}–${mktHigh}</div>
-            </div>
+            {theyBringingSection}
             <div className="trade-arrow">⇄</div>
             <div>
               <div className="trade-summary-label">They want</div>
@@ -503,10 +723,10 @@ export default function InteractionModal({
           <p className="no-stock-msg">You don't have what they want in stock.</p>
           <button className="secondary-btn" onClick={() =>
             commitResult({
-              cashDelta: 0, inventoryRemove: null, inventoryAdd: null,
+              cashDelta: 0, inventoryRemoves: [], inventoryAdds: [],
               outcome: "No stock",
               label: `Trade - no stock: ${customer.wantedShoe.model} Sz ${customer.wantedSize}`,
-              missedShoe: { shoeId: customer.wantedShoe.id, brand: customer.wantedShoe.brand, model: customer.wantedShoe.model, colorway: customer.wantedShoe.colorway, size: customer.wantedSize },
+              missedShoes: [{ shoeId: customer.wantedShoe.id, brand: customer.wantedShoe.brand, model: customer.wantedShoe.model, colorway: customer.wantedShoe.colorway, size: customer.wantedSize }],
               timeCost: inspectionTimeCost,
             })
           }>
@@ -520,11 +740,7 @@ export default function InteractionModal({
       <div className="modal-section">
         {inspection === "close" && <div className="inspection-tag close">Closely Inspected</div>}
         <div className="trade-summary">
-          <div>
-            <div className="trade-summary-label">They're bringing</div>
-            <div className="trade-summary-shoe">{shoe.brand} {shoe.model}</div>
-            <div className="trade-summary-mkt">{shoe.colorway} · Sz {size} · ${mktLow}–${mktHigh}</div>
-          </div>
+          {theyBringingSection}
           <div className="trade-arrow">⇄</div>
           <div>
             <div className="trade-summary-label">They want</div>
