@@ -159,7 +159,7 @@ export default function InventoryTab({
                   className="inv-thumb"
                   src={shoeImageUrl(group.shoeId)}
                   alt=""
-                  onError={e => { e.target.style.display = "none"; }}
+                  onError={e => { e.target.parentElement.style.display = "none"; }}
                 />
               </div>
               <div className="shoe-info">

@@ -13,7 +13,7 @@ function ShoeImage({ shoeId, size = 72 }) {
         className="modal-thumb"
         src={shoeImageUrl(shoeId)}
         alt=""
-        onError={e => { e.target.style.display = "none"; }}
+        onError={e => { e.target.parentElement.style.display = "none"; }}
       />
     </div>
   );
@@ -508,7 +508,7 @@ export default function InteractionModal({
       return (
         <div className="modal-section">
           <div className="modal-multi-thumbs">
-            {buyInStock.map((ci, k) => <ShoeImage key={k} shoeId={ci.shoe.id} size={48} />)}
+            {buyItemsResolved.map((ci, k) => <ShoeImage key={k} shoeId={ci.shoe.id} size={48} />)}
           </div>
           <p className="modal-shoe-name">{buyInStock.length} item{buyInStock.length > 1 ? "s" : ""} wanted</p>
           <div className="multi-item-list">
