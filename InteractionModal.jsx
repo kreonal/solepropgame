@@ -1,10 +1,24 @@
 import { useState } from "react";
-import { PERSONALITIES, getSizeAdjust } from "./data";
+import { PERSONALITIES, getSizeAdjust, shoeImageUrl } from "./data";
 
 // BUY = 0.25h, SELL/TRADE base = 0.5h, inspection = +0.5h
 const TIME_BUY     = 0.25;
 const TIME_SELL    = 0.5;
 const TIME_INSPECT = 0.5;
+
+function ShoeImage({ shoeId, size = 72 }) {
+  return (
+    <div className="modal-thumb-wrap" style={{ width: size, height: size }}>
+      <img
+        className="modal-thumb"
+        src={shoeImageUrl(shoeId)}
+        alt=""
+        onError={e => { e.target.style.display = "none"; }}
+      />
+    </div>
+  );
+}
+
 
 function ProfitBadge({ pct }) {
   if (pct == null || isNaN(pct)) return null;
@@ -361,6 +375,9 @@ export default function InteractionModal({
       <div className="modal-section">
         {isMultiItem ? (
           <>
+            <div className="modal-multi-thumbs">
+              {customerItems.map((ci, k) => <ShoeImage key={k} shoeId={ci.shoe.id} size={48} />)}
+            </div>
             <p className="modal-shoe-name">{customerItems.length} items</p>
             <div className="multi-item-list">
               {customerItems.map((ci, k) => (
@@ -373,6 +390,7 @@ export default function InteractionModal({
           </>
         ) : (
           <>
+            <ShoeImage shoeId={shoe.id} />
             <p className="modal-shoe-name">{shoe.brand} {shoe.model} — {shoe.colorway}</p>
             <p className="modal-size">Size {size}</p>
           </>
@@ -445,6 +463,9 @@ export default function InteractionModal({
         <div className="modal-section">
           {isMultiItem ? (
             <>
+              <div className="modal-multi-thumbs">
+                {customerItems.map((ci, k) => <ShoeImage key={k} shoeId={ci.shoe.id} size={48} />)}
+              </div>
               <p className="modal-shoe-name">{customerItems.length} items wanted</p>
               <div className="multi-item-list">
                 {buyItemsResolved.map((ci, k) => (
@@ -458,6 +479,7 @@ export default function InteractionModal({
             </>
           ) : (
             <>
+              <ShoeImage shoeId={shoe.id} />
               <p className="modal-shoe-name">{shoe.brand} {shoe.model} — {shoe.colorway}</p>
               <p className="modal-size">Size {size}</p>
               <p className="no-stock-msg">{inventoryItem?.isFake ? "This pair is a fake — it cannot be sold." : "You don't have this in stock."}</p>
@@ -485,6 +507,9 @@ export default function InteractionModal({
 
       return (
         <div className="modal-section">
+          <div className="modal-multi-thumbs">
+            {buyInStock.map((ci, k) => <ShoeImage key={k} shoeId={ci.shoe.id} size={48} />)}
+          </div>
           <p className="modal-shoe-name">{buyInStock.length} item{buyInStock.length > 1 ? "s" : ""} wanted</p>
           <div className="multi-item-list">
             {buyItemsResolved.map((ci, k) => {
@@ -551,6 +576,7 @@ export default function InteractionModal({
 
     return (
       <div className="modal-section">
+        <ShoeImage shoeId={shoe.id} />
         <p className="modal-shoe-name">{shoe.brand} {shoe.model} — {shoe.colorway}</p>
         <p className="modal-size">Size {size}</p>
 
@@ -623,6 +649,9 @@ export default function InteractionModal({
       <div className="modal-section">
         {isMultiItem ? (
           <>
+            <div className="modal-multi-thumbs">
+              {customerItems.map((ci, k) => <ShoeImage key={k} shoeId={ci.shoe.id} size={48} />)}
+            </div>
             <p className="modal-shoe-name">{customerItems.length} items</p>
             <div className="multi-item-list">
               {customerItems.map((ci, k) => (
@@ -636,6 +665,7 @@ export default function InteractionModal({
           </>
         ) : (
           <>
+            <ShoeImage shoeId={shoe.id} />
             <p className="modal-shoe-name">{shoe.brand} {shoe.model} — {shoe.colorway}</p>
             <p className="modal-size">Size {size}</p>
           </>
@@ -689,6 +719,9 @@ export default function InteractionModal({
 
     const theyBringingSection = isMultiItem ? (
       <div>
+        <div className="modal-multi-thumbs">
+          {customerItems.map((ci, k) => <ShoeImage key={k} shoeId={ci.shoe.id} size={48} />)}
+        </div>
         <div className="trade-summary-label">They're bringing ({customerItems.length} items · ~${theirMarket} total)</div>
         <div className="multi-item-list">
           {customerItems.map((ci, k) => (
@@ -702,6 +735,7 @@ export default function InteractionModal({
       </div>
     ) : (
       <div>
+        <ShoeImage shoeId={shoe.id} />
         <div className="trade-summary-label">They're bringing</div>
         <div className="trade-summary-shoe">{shoe.brand} {shoe.model}</div>
         <div className="trade-summary-mkt">{shoe.colorway} · Sz {size} · ${mktLow}–${mktHigh}</div>
@@ -715,6 +749,7 @@ export default function InteractionModal({
             {theyBringingSection}
             <div className="trade-arrow">⇄</div>
             <div>
+              <ShoeImage shoeId={customer.wantedShoe.id} />
               <div className="trade-summary-label">They want</div>
               <div className="trade-summary-shoe">{customer.wantedShoe.brand} {customer.wantedShoe.model}</div>
               <div className="trade-summary-mkt">{customer.wantedShoe.colorway} · Sz {customer.wantedSize} · ~${wantedMarket}</div>
@@ -743,6 +778,7 @@ export default function InteractionModal({
           {theyBringingSection}
           <div className="trade-arrow">⇄</div>
           <div>
+            <ShoeImage shoeId={customer.wantedShoe.id} />
             <div className="trade-summary-label">They want</div>
             <div className="trade-summary-shoe">{customer.wantedShoe.brand} {customer.wantedShoe.model}</div>
             <div className="trade-summary-mkt">{customer.wantedShoe.colorway} · Sz {customer.wantedSize} · ~${wantedMarket}</div>
