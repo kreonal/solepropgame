@@ -280,15 +280,19 @@ export function generateStartingInventory(dailyMarkets) {
 
 // ── Market range generation ───────────────────────────────────────────────────
 // Returns { [shoeId]: { low, mid, high } }
-// Each shoe's mid is base × brand trend × style trend × daily fluctuation.
+// Each shoe's mid is base × brand trend × daily fluctuation.
+// Fluctuation range is tightened based on trend direction so up-trending
+// shoes can't go net negative on any given day.
 // Spread is ±12% around mid.
-export function generateDailyMarkets(brandTrends = {}, styleTrends = {}) {
+export function generateDailyMarkets(brandTrends = {}) {
   const markets = {};
   for (const shoe of CATALOG) {
-    const brandMult = brandTrends[shoe.brand]?.multiplier ?? 1;
-    const styleMult = styleTrends[shoe.style]?.multiplier ?? 1;
-    const fluc      = 0.92 + Math.random() * 0.16;
-    const mid       = Math.round(shoe.baseMarket * fluc * brandMult * styleMult);
+    const trend     = brandTrends[shoe.brand];
+    const brandMult = trend?.multiplier ?? 1;
+    const flucMin   = trend?.direction === "up" ? 0.97 : trend?.direction === "down" ? 0.90 : 0.93;
+    const flucMax   = trend?.direction === "up" ? 1.08 : trend?.direction === "down" ? 1.03 : 1.07;
+    const fluc      = flucMin + Math.random() * (flucMax - flucMin);
+    const mid       = Math.round(shoe.baseMarket * fluc * brandMult);
     markets[shoe.id] = { low: Math.round(mid * 0.88), mid, high: Math.round(mid * 1.12) };
   }
   return markets;
@@ -321,60 +325,35 @@ export function advanceBrandTrends(trends) {
   return next;
 }
 
-// ── Style trends ──────────────────────────────────────────────────────────────
-export const STYLE_LIST = [
-  "Jordan 1", "Jordan 3", "Jordan 4", "Jordan 5", "Jordan 6", "Jordan 7", "Jordan 11",
-  "Air Force 1", "Air Max 1", "Air Max 90", "Air Max 95", "Air Max 97", "Dunk Low", "SB Dunk",
-  "Yeezy 350", "Yeezy 500", "Yeezy 700", "Yeezy Slide", "Samba", "Handball Spezial",
-  "Gazelle", "Campus", "Forum", "Ultra 4D", "NMD",
-  "NB 550", "NB 990", "NB 991", "NB 992", "NB 993", "NB 1906R", "NB 2002R", "NB 827",
-  "Gel-1130", "Gel-Kayano", "Gel-Nimbus", "Gel-Lyte", "Gel-NYC", "GT-2160", "Gel-1090", "Gel-Quantum",
-];
-
-export function generateStyleTrends() {
-  const trends = {};
-  for (const style of STYLE_LIST) trends[style] = rollTrend();
-  return trends;
-}
-
-export function advanceStyleTrends(trends) {
-  const next = {};
-  for (const style of STYLE_LIST) {
-    const t = trends[style];
-    next[style] = t && t.weeksLeft <= 1 ? rollTrend() : t ? { ...t, weeksLeft: t.weeksLeft - 1 } : rollTrend();
-  }
-  return next;
-}
 
 // ── Sell chance ───────────────────────────────────────────────────────────────
 // Returns 0–1 probability that this inventory item generates a buyer today.
-export function computeSellChance(item, marketRange, brandTrends, styleTrends) {
+// Driven by list price relative to market range, brand trend, and size desirability.
+// Staleness and style trends removed — storage cap and cash flow create natural urgency.
+export function computeSellChance(item, marketRange, brandTrends) {
   const shoe = CATALOG.find(s => s.id === item.shoeId);
   if (!shoe || !marketRange) return 0;
   const brandDir  = brandTrends[shoe.brand]?.direction;
-  const styleDir  = styleTrends[shoe.style]?.direction;
   const brandMult = { up: 1.15, neutral: 1.0, down: 0.80 }[brandDir] ?? 1.0;
-  const styleMult = { up: 1.15, neutral: 1.0, down: 0.80 }[styleDir] ?? 1.0;
   const sizeMult  = getSizeDesirability(item.size);
   const { low, mid, high } = marketRange;
   const priceFactor =
     item.listPrice <= low  ? 0.80 :
     item.listPrice <= mid  ? 0.60 :
     item.listPrice <= high ? 0.40 : 0.15;
-  const staleness = Math.max(0.10, 1 - (item.daysListed ?? 0) * 0.05);
-  return Math.min(0.95, priceFactor * brandMult * styleMult * sizeMult * staleness);
+  return Math.min(0.95, priceFactor * brandMult * sizeMult);
 }
 
 // ── Sell-chance buyer generation ──────────────────────────────────────────────
 // Replaces BUY pool in generateCustomers. Each inventory item rolls for a buyer.
-export function generateSellChanceBuyers(inventory, dailyMarkets, brandTrends, styleTrends, hasMarketing = false) {
+export function generateSellChanceBuyers(inventory, dailyMarkets, brandTrends, hasMarketing = false) {
   const buyers = [];
   let idCounter = 10000;
 
   for (const item of inventory) {
     const range = dailyMarkets[item.shoeId];
     if (!range) continue;
-    const chance = computeSellChance(item, range, brandTrends, styleTrends);
+    const chance = computeSellChance(item, range, brandTrends);
     if (Math.random() < chance) {
       const shoe = CATALOG.find(s => s.id === item.shoeId);
       if (!shoe) continue;

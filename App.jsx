@@ -19,8 +19,6 @@ import {
   generateReleaseCalendar,
   generateBrandTrends,
   advanceBrandTrends,
-  generateStyleTrends,
-  advanceStyleTrends,
   generateSellChanceBuyers,
 } from "./data";
 
@@ -41,9 +39,8 @@ function fmtDay(day) {
 export default function App() {
   const [initState] = useState(() => {
     const trends  = generateBrandTrends();
-    const styleTr = generateStyleTrends();
-    const markets = generateDailyMarkets(trends, styleTr);
-    return { trends, styleTr, markets, customers: generateCustomers(markets, null, 1) };
+    const markets = generateDailyMarkets(trends);
+    return { trends, markets, customers: generateCustomers(markets, null, 1) };
   });
 
   const [phase,      setPhase]      = useState("day");
@@ -53,7 +50,6 @@ export default function App() {
   const [dailyMarkets,     setDailyMarkets]     = useState(initState.markets);
   const [prevDailyMarkets, setPrevDailyMarkets] = useState(null);
   const [brandTrends,      setBrandTrends]      = useState(initState.trends);
-  const [styleTrends,      setStyleTrends]      = useState(initState.styleTr);
   const [cash,             setCash]             = useState(STARTING_CASH);
   const [loanBalance,      setLoanBalance]      = useState(LOAN_AMOUNT);
   const [inventory,        setInventory]        = useState([]);
@@ -104,7 +100,7 @@ export default function App() {
   const stateSnapshotRef = useRef(null);
   stateSnapshotRef.current = {
     version: 2,
-    phase, tab, dailyMarkets, prevDailyMarkets, brandTrends, styleTrends,
+    phase, tab, dailyMarkets, prevDailyMarkets, brandTrends,
     cash, loanBalance, inventory, day, customers, transactions,
     missedDemand, expenseLog, raffleReleases, rafflesDoneForWeek,
     releaseCalendar,
@@ -199,14 +195,13 @@ export default function App() {
 
   function buildFreshState() {
     const trends          = generateBrandTrends();
-    const styleTr         = generateStyleTrends();
-    const markets         = generateDailyMarkets(trends, styleTr);
+    const markets         = generateDailyMarkets(trends);
     const customers       = generateCustomers(markets, null, 1);
     const releaseCalendar = generateReleaseCalendar();
     return {
       version: 2,
       phase: "day", tab: "customers",
-      dailyMarkets: markets, prevDailyMarkets: null, brandTrends: trends, styleTrends: styleTr,
+      dailyMarkets: markets, prevDailyMarkets: null, brandTrends: trends,
       cash: STARTING_CASH, loanBalance: LOAN_AMOUNT,
       inventory: [], day: 1, customers,
       transactions: [], missedDemand: [], expenseLog: [],
@@ -244,7 +239,6 @@ export default function App() {
     setAdActive(s.adActive);
     setUpgrades(s.upgrades);
     setKeyMasterShoes(s.keyMasterShoes);
-    setStyleTrends(s.styleTrends ?? generateStyleTrends());
     setShowGuide(true);
     setActiveCustomer(null);
   }
@@ -256,7 +250,6 @@ export default function App() {
     if (s.dailyMarkets)             setDailyMarkets(s.dailyMarkets);
     if (s.prevDailyMarkets)         setPrevDailyMarkets(s.prevDailyMarkets);
     if (s.brandTrends)              setBrandTrends(s.brandTrends);
-    if (s.styleTrends)              setStyleTrends(s.styleTrends);
     if (s.cash             != null) setCash(s.cash);
     if (s.loanBalance      != null) setLoanBalance(s.loanBalance);
     if (s.inventory)                setInventory(s.inventory);
@@ -288,7 +281,7 @@ export default function App() {
       name: saveName,
       state: {
         version: 2,
-        phase, tab, dailyMarkets, prevDailyMarkets, brandTrends, styleTrends,
+        phase, tab, dailyMarkets, prevDailyMarkets, brandTrends,
         cash, loanBalance, inventory, day, customers, transactions,
         missedDemand, expenseLog, raffleReleases, rafflesDoneForWeek,
         releaseCalendar,
@@ -305,19 +298,16 @@ export default function App() {
 
   // ── End of day → between (or bailout) ─────────────────────────────────────
   function handleGoToBetween(kmBonusCash = 0) {
-    let newTrends      = brandTrends;
-    let newStyleTrends = styleTrends;
+    let newTrends = brandTrends;
     const nextDay = day + 1;
 
     // Advance trends + generate new markets at week boundary
     if (day % 7 === 0) {
-      newTrends      = advanceBrandTrends(brandTrends);
-      newStyleTrends = advanceStyleTrends(styleTrends);
+      newTrends = advanceBrandTrends(brandTrends);
       setBrandTrends(newTrends);
-      setStyleTrends(newStyleTrends);
     }
 
-    const newMarkets = generateDailyMarkets(newTrends, newStyleTrends);
+    const newMarkets = generateDailyMarkets(newTrends);
     setPrevDailyMarkets(dailyMarkets);
     setDailyMarkets(newMarkets);
     setMissedDemand([]);
@@ -393,7 +383,7 @@ export default function App() {
   // ── Between → start next day ───────────────────────────────────────────────
   function handleStartNextDay() {
     const stockedItems = inventory.map(i => ({ shoeId: i.shoeId, size: i.size }));
-    const sellBuyers   = generateSellChanceBuyers(inventory, dailyMarkets, brandTrends, styleTrends, upgrades.hasMarketing);
+    const sellBuyers   = generateSellChanceBuyers(inventory, dailyMarkets, brandTrends, upgrades.hasMarketing);
     const regularCust  = generateCustomers(dailyMarkets, stockedItems, day, recentReleaseIds, featuredShoes, adActive, upgrades.hasMarketing);
     setCustomers([...sellBuyers, ...regularCust]);
     setInventory(prev => prev.map(i => ({ ...i, daysListed: (i.daysListed ?? 0) + 1 })));
@@ -726,7 +716,6 @@ export default function App() {
             dailyMarkets={dailyMarkets}
             prevDailyMarkets={prevDailyMarkets}
             brandTrends={brandTrends}
-            styleTrends={styleTrends}
             missedDemand={missedDemand}
             canEditPrices={true}
             onStartDay={handleStartNextDay}
@@ -866,7 +855,6 @@ export default function App() {
           dailyMarkets={dailyMarkets}
           prevDailyMarkets={prevDailyMarkets}
           brandTrends={brandTrends}
-          styleTrends={styleTrends}
           missedDemand={missedDemand}
           canEditPrices={false}
           inventoryCount={inventoryCount}
@@ -944,7 +932,6 @@ export default function App() {
           inventory={inventory}
           dailyMarkets={dailyMarkets}
           brandTrends={brandTrends}
-          styleTrends={styleTrends}
           cash={cash}
           inventoryCount={inventoryCount}
           inventoryCap={effectiveInventoryCap}
