@@ -156,6 +156,11 @@ export const CATALOG = [
 
 export const AVAILABLE_SIZES = [7, 7.5, 8, 8.5, 9, 9.5, 10, 10.5, 11, 12, 13];
 
+const SUPABASE_IMAGE_BASE = "https://tvlpdtntepkdcuehzyxj.supabase.co/storage/v1/object/public/sneaker-images";
+export function shoeImageUrl(shoeId) {
+  return `${SUPABASE_IMAGE_BASE}/${shoeId}.jpg`;
+}
+
 // ── Release calendar ──────────────────────────────────────────────────────────
 // Generates a shuffled per-brand pool from CATALOG (non-grail, has retail).
 // Called once at new game start and stored in state.

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getSizeAdjust, CATALOG } from "./data";
+import { getSizeAdjust, CATALOG, shoeImageUrl } from "./data";
 
 const TREND_ICON  = { up: "📈", neutral: "➖", down: "📉" };
 const TREND_LABEL = { up: "Trending Up", neutral: "Stable", down: "Cooling Off" };
@@ -107,6 +107,13 @@ export default function InventoryTab({
     g.sizes.sort((a, b) => a.size - b.size);
   }
 
+  const BRAND_ORDER = ["Nike", "Jordan", "Adidas", "New Balance", "Asics"];
+  shoeGroups.sort((a, b) => {
+    const bi = BRAND_ORDER.indexOf(a.brand) - BRAND_ORDER.indexOf(b.brand);
+    if (bi !== 0) return bi;
+    return a.model.localeCompare(b.model);
+  });
+
   const sortedMissed = [...(missedDemand ?? [])].sort((a, b) => b.count - a.count);
 
   return (
@@ -147,6 +154,14 @@ export default function InventoryTab({
         return (
           <div key={group.shoeId} className="card">
             <div className="card-header" onClick={() => setExpanded(isExpanded ? null : gi)}>
+              <div className="inv-thumb-wrap">
+                <img
+                  className="inv-thumb"
+                  src={shoeImageUrl(group.shoeId)}
+                  alt=""
+                  onError={e => { e.target.style.display = "none"; }}
+                />
+              </div>
               <div className="shoe-info">
                 <span className="shoe-brand">{group.brand}</span>
                 <span className="shoe-name">{group.model} — {group.colorway}</span>
