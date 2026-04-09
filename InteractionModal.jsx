@@ -765,7 +765,7 @@ export default function InteractionModal({
               outcome: "No stock",
               label: `Trade - no stock: ${customer.wantedShoe.model} Sz ${customer.wantedSize}`,
               missedShoes: [{ shoeId: customer.wantedShoe.id, brand: customer.wantedShoe.brand, model: customer.wantedShoe.model, colorway: customer.wantedShoe.colorway, size: customer.wantedSize }],
-              timeCost: inspectionTimeCost,
+              timeCost: 0,
             })
           }>
             Send Them Off
