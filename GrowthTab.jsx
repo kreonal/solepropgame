@@ -4,8 +4,7 @@ const UPGRADE_META = {
   storagePlus50:    { label: "Storage +50 Pairs",             cost: 2000,  recurring: false },
   storagePlus100:   { label: "Storage +100 Pairs",            cost: 4500,  recurring: false },
   authNone:         { label: "No Auth Tool",                  cost: 0,     recurring: false },
-  authApp:          { label: "Auth App",                      cost: 100,   recurring: true  },
-  authEmployee:     { label: "Auth Employee",                 cost: 1500,  recurring: true  },
+  authEmployee:     { label: "Auth Employee",                 cost: 700,   recurring: true  },
   marketing:        { label: "Marketing Employee",            cost: 1500,  recurring: true  },
   marketingCancel:  { label: "Cancel Marketing Employee",     cost: 0,     recurring: false },
   keyMaster:        { label: "Key Master Vault",              cost: 5000,  recurring: false },
@@ -29,7 +28,7 @@ export default function GrowthTab({ upgrades, cash, phase, day, onBuyUpgrade, st
     if (!canBuy) return;
     if (key.startsWith("auth")) {
       if (!canChangeRecurring) return;
-      setPendingAuthTier(key === "authNone" ? "none" : key === "authApp" ? "app" : "employee");
+      setPendingAuthTier(key === "authNone" ? "none" : "employee");
       setPendingKey(null);
     } else {
       if (key === "marketing" && !canChangeRecurring) return;
@@ -40,7 +39,7 @@ export default function GrowthTab({ upgrades, cash, phase, day, onBuyUpgrade, st
 
   function handleConfirm() {
     if (authChanged) {
-      const keyMap = { none: "authNone", app: "authApp", employee: "authEmployee" };
+      const keyMap = { none: "authNone", employee: "authEmployee" };
       onBuyUpgrade(keyMap[pendingAuthTier]);
       setPendingAuthTier(null);
     } else if (pendingKey) {
@@ -55,7 +54,7 @@ export default function GrowthTab({ upgrades, cash, phase, day, onBuyUpgrade, st
   }
 
   const hasPending = pendingKey !== null || authChanged;
-  const pendingMeta = pendingKey ? UPGRADE_META[pendingKey] : authChanged ? UPGRADE_META[{ none: "authNone", app: "authApp", employee: "authEmployee" }[pendingAuthTier]] : null;
+  const pendingMeta = pendingKey ? UPGRADE_META[pendingKey] : authChanged ? UPGRADE_META[{ none: "authNone", employee: "authEmployee" }[pendingAuthTier]] : null;
   const pendingCost = pendingMeta?.cost ?? 0;
   const canAfford   = cash >= pendingCost;
 
@@ -213,10 +212,9 @@ export default function GrowthTab({ upgrades, cash, phase, day, onBuyUpgrade, st
       </p>
 
       <h4 className="upgrade-section-sub upgrade-sub-label">Authentication</h4>
-      <p className="upgrade-section-sub" style={{ marginBottom: 6 }}>Both paid tiers remove Quick Look.</p>
-      <AuthOption tier="none"     title="No Auth Tool"    desc="Manual inspection only. Quick Look available."            cost={0}    />
-      <AuthOption tier="app"      title="Auth App"        desc="Cuts close-inspection time in half. Quick Look disabled."  badge="$100/wk"   cost={100}  />
-      <AuthOption tier="employee" title="Auth Employee"   desc="Zero inspection time cost. Quick Look disabled."           badge="$1,500/wk" cost={1500} />
+      <p className="upgrade-section-sub" style={{ marginBottom: 6 }}>Employee tier removes Quick Look and makes inspection instant.</p>
+      <AuthOption tier="none"     title="No Auth Tool"    desc="Manual inspection only. Quick Look available (50% fake detection)."  cost={0}   />
+      <AuthOption tier="employee" title="Auth Employee"   desc="Zero inspection time cost. Catches all fakes automatically."          badge="$700/wk" cost={700} />
 
       <h4 className="upgrade-section-sub upgrade-sub-label" style={{ marginTop: 16 }}>Marketing</h4>
       <OwnableCard upgradeKey="marketing" title="Marketing Employee" desc="+5 buyers per day. BUY customers more willing to pay full price." badge="$1,500/wk" owned={hasMarketing} cost={1500} cancelKey="marketingCancel" />

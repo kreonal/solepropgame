@@ -9,10 +9,8 @@ export default function ExpensesTab({ loanBalance, expenseLog, day, weeklyLoan, 
   projected.push({ label: "Utilities",  amount: weeklyUtil });
   if (loanBalance > 0)
     projected.push({ label: "Loan Payment", amount: weeklyLoan });
-  if (authTier === "app")
-    projected.push({ label: "Auth App",      amount: 100 });
   if (authTier === "employee")
-    projected.push({ label: "Auth Employee", amount: 1500 });
+    projected.push({ label: "Auth Employee", amount: 700 });
   if (hasMarketing)
     projected.push({ label: "Marketing Employee", amount: 1500 });
   const projectedTotal = projected.reduce((s, e) => s + e.amount, 0);

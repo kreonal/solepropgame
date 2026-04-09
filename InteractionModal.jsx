@@ -68,10 +68,7 @@ export default function InteractionModal({
   const customerItems = customer.items ?? [{ shoe, size, marketRange: resolvedRange, isFake: customer.isFake }];
   const isMultiItem = customerItems.length > 1;
 
-  const effectiveInspectTime =
-    authTier === "employee" ? 0 :
-    authTier === "app"      ? TIME_INSPECT / 2 :
-    TIME_INSPECT;
+  const effectiveInspectTime = authTier === "employee" ? 0 : TIME_INSPECT;
 
   // Per-item max/floor, then summed for total negotiation
   function itemBuyMax(item) {
@@ -212,7 +209,7 @@ export default function InteractionModal({
           colorway: ci.shoe.colorway, size: ci.size, quantity: 1,
           avgPurchasePrice: totalMid > 0 ? Math.round(num * (ci.marketRange.mid / totalMid)) : Math.round(num / customerItems.length),
           listPrice: ci.marketRange.mid,
-          isFake: inspection === "quick" && ci.isFake,
+          isFake: inspection === "quick" && ci.isFake && Math.random() < 0.5,
           daysListed: 0,
         }));
         const label = customerItems.length === 1
@@ -301,7 +298,7 @@ export default function InteractionModal({
         colorway: ci.shoe.colorway, size: ci.size, quantity: 1,
         avgPurchasePrice: totalTheirMid > 0 ? Math.round(effectiveCost * (ci.marketRange.mid / totalTheirMid)) : Math.round(effectiveCost / customerItems.length),
         listPrice: ci.marketRange.mid,
-        isFake: inspection === "quick" && ci.isFake,
+        isFake: inspection === "quick" && ci.isFake && Math.random() < 0.5,
         daysListed: 0,
       }));
       const wantedItem = inventory.find(i => i.shoeId === customer.wantedShoe.id && i.size === customer.wantedSize);
@@ -372,12 +369,10 @@ export default function InteractionModal({
 
   // ── Inspection gate ────────────────────────────────────────────────────────
   function renderInspectionGate() {
-    const canInspect     = hoursLeft >= TIME_SELL + effectiveInspectTime;
-    const hasAuthUpgrade = authTier === "app" || authTier === "employee";
-    const closeSubLabel  = authTier === "employee"
+    const canInspect    = hoursLeft >= TIME_SELL + effectiveInspectTime;
+    const hasEmployee   = authTier === "employee";
+    const closeSubLabel = hasEmployee
       ? `Auth employee inspects · costs 0.5h total`
-      : authTier === "app"
-      ? `Auth app inspects · costs ${(TIME_SELL + effectiveInspectTime).toFixed(2)}h total`
       : `Authenticate shoes · costs 1.0h total`;
     const hasFake = customerItems.some(ci => ci.isFake);
 
@@ -438,14 +433,14 @@ export default function InteractionModal({
             }}
           >
             <span className="inspection-btn-title">
-              {authTier === "employee" ? "Inspect (Employee)" : authTier === "app" ? "Inspect (App)" : "Closely Inspect"}
+              {hasEmployee ? "Inspect (Employee)" : "Closely Inspect"}
             </span>
             <span className="inspection-btn-sub">{closeSubLabel}</span>
           </button>
-          {!hasAuthUpgrade && (
+          {!hasEmployee && (
             <button className="inspection-btn inspection-quick" onClick={() => setInspection("quick")}>
               <span className="inspection-btn-title">Quick Look</span>
-              <span className="inspection-btn-sub">Skip auth · costs 0.5h total</span>
+              <span className="inspection-btn-sub">50% chance to catch fakes · costs 0.5h total</span>
             </button>
           )}
           <button
@@ -465,7 +460,7 @@ export default function InteractionModal({
         </div>
         {!canInspect && (
           <p className="inspection-warn">
-            {hasAuthUpgrade ? "Not enough time to inspect." : "Not enough time to closely inspect — only Quick Look available."}
+            {hasEmployee ? "Not enough time to inspect." : "Not enough time to closely inspect — only Quick Look available."}
           </p>
         )}
       </div>

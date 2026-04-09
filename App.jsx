@@ -21,7 +21,6 @@ import {
   generateReleaseCalendar,
   generateBrandTrends,
   advanceBrandTrends,
-  generateSellChanceBuyers,
 } from "./data";
 
 const BAILOUT_INTEREST  = 0.30;
@@ -42,7 +41,7 @@ export default function App() {
   const [initState] = useState(() => {
     const trends  = generateBrandTrends();
     const markets = generateDailyMarkets(trends);
-    return { trends, markets, customers: generateCustomers(markets, null, 1) };
+    return { trends, markets, customers: generateCustomers(markets, trends, null, 1) };
   });
 
   const [phase,      setPhase]      = useState("day");
@@ -105,9 +104,7 @@ export default function App() {
   }, 0);
   const projectedWeeklyTotal = WEEKLY_RENT + WEEKLY_UTIL
     + (loanBalance > 0 ? WEEKLY_LOAN : 0)
-    + (upgrades.authTier === "app"      ? 100  : 0)
-    + (upgrades.authTier === "employee" ? 1500 : 0)
-    + (upgrades.hasMarketing            ? 1500 : 0)
+    + (upgrades.authTier === "employee" ? 700 : 0)
     + tentativeCost;
 
   // Always-fresh state snapshot for use inside stale closures (e.g. auth callbacks)
@@ -212,7 +209,7 @@ export default function App() {
   function buildFreshState() {
     const trends          = generateBrandTrends();
     const markets         = generateDailyMarkets(trends);
-    const customers       = generateCustomers(markets, null, 1);
+    const customers       = generateCustomers(markets, trends, null, 1);
     const releaseCalendar = generateReleaseCalendar();
     return {
       version: 2,
@@ -450,10 +447,10 @@ export default function App() {
 
   // ── Between → start next day ───────────────────────────────────────────────
   function handleStartNextDay(featured = []) {
-    const stockedItems = inventory.map(i => ({ shoeId: i.shoeId, size: i.size }));
-    const sellBuyers   = generateSellChanceBuyers(inventory, dailyMarkets, brandTrends, upgrades.hasMarketing);
-    const regularCust  = generateCustomers(dailyMarkets, stockedItems, day, recentReleaseIds, featured, adActive, upgrades.hasMarketing);
-    setCustomers([...sellBuyers, ...regularCust]);
+    const stockedItems      = inventory.map(i => ({ shoeId: i.shoeId, size: i.size }));
+    const prevDayTxnCount   = transactions.length;
+    const newCustomers      = generateCustomers(dailyMarkets, brandTrends, stockedItems, day, prevDayTxnCount, featured, adActive);
+    setCustomers(newCustomers);
     setInventory(prev => prev.map(i => ({ ...i, daysListed: (i.daysListed ?? 0) + 1 })));
     setTransactions([]);
     setHoursLeft(10);
@@ -477,11 +474,7 @@ export default function App() {
       setCash(p => p - 4500);
       setUpgrades(p => ({ ...p, storagePlus100: true }));
       setExpenseLog(prev => [...prev, { week, label: "Upgrade: Storage +100", amount: -4500 }]);
-    } else if (key === "authApp") {
-      if (cash < 100) return;
-      setUpgrades(p => ({ ...p, authTier: "app" }));
     } else if (key === "authEmployee") {
-      if (cash < 1500) return;
       setUpgrades(p => ({ ...p, authTier: "employee" }));
     } else if (key === "authNone") {
       setUpgrades(p => ({ ...p, authTier: "none" }));
