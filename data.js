@@ -159,7 +159,7 @@ export const CATALOG = [
   { id: "sb-heineken",             brand: "Nike", style: "SB Dunk", model: "SB Dunk Low", colorway: "Heineken",      baseMarket: 1200,  isGrail: true },
   { id: "sb-cactus-jack",          brand: "Nike", style: "SB Dunk", model: "SB Dunk Low", colorway: "Cactus Jack",   baseMarket: 730,  isGrail: true },
   { id: "sb-blue-lobster",         brand: "Nike", style: "SB Dunk", model: "SB Dunk Low", colorway: "Blue Lobster",      baseMarket: 830,  isGrail: true },
-  { id: "sb-freddy-krueger",       brand: "Nike", style: "SB Dunk", model: "SB Dunk Low", colorway: "Freddy Krueger",    baseMarket: 4500, isGrail: true },
+  { id: "sb-freddy-krueger",       brand: "Nike", style: "SB Dunk", model: "SB Dunk Low", colorway: "Freddy Krueger",    baseMarket: 30000, isGrail: true },
   { id: "sb-mf-doom",              brand: "Nike", style: "SB Dunk", model: "SB Dunk Low", colorway: "MF Doom",           baseMarket: 3800, isGrail: true },
   { id: "sb-supreme-red",          brand: "Nike", style: "SB Dunk", model: "SB Dunk Low", colorway: "Supreme Red",       baseMarket: 1100, isGrail: true },
   { id: "sb-what-the-dunk",        brand: "Nike", style: "SB Dunk", model: "SB Dunk Low", colorway: "What The Dunk",     baseMarket: 2500, isGrail: true },
