@@ -3,11 +3,11 @@ import { AVAILABLE_SIZES, resolveRaffleWin, resolveRaffleMarket } from "./data";
 
 const MAX_ENTRIES   = 4;
 const PREORDER_MULT = 1.20;
-export default function RaffleScreen({ releases, cash, weekNumber, inventoryCount, inventoryCap = 50, dailyMarkets = {}, onComplete, onSkip }) {
+export default function RaffleScreen({ releases, cash, weekNumber, inventoryCount, inventoryCap = 50, dailyMarkets = {}, initialRaffleEntries = {}, initialPreorders = new Set(), onComplete, onSkip }) {
   // raffleEntries: { [releaseId]: size }
   // preorders: Set of releaseIds
-  const [raffleEntries, setRaffleEntries] = useState({});
-  const [preorders,     setPreorders]     = useState(new Set());
+  const [raffleEntries, setRaffleEntries] = useState(initialRaffleEntries);
+  const [preorders,     setPreorders]     = useState(initialPreorders);
   const [results,       setResults]       = useState(null);
 
   const raffleCount  = Object.keys(raffleEntries).length;

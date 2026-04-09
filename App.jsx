@@ -13,6 +13,7 @@ import AuthModal from "./AuthScreen";
 import SaveSelectScreen from "./SaveSelectScreen";
 import GrowthTab from "./GrowthTab";
 import PhotoPostScreen from "./PhotoPostScreen";
+import ReleasesTab from "./ReleasesTab";
 import {
   generateDailyMarkets,
   generateCustomers,
@@ -82,6 +83,8 @@ export default function App() {
   const [storeName,        setStoreName]        = useState(() => localStorage.getItem("storeName") ?? "Sole Proprietor");
   const [storeHandle,      setStoreHandle]      = useState(() => localStorage.getItem("storeHandle") ?? "sole_prop");
   const [storeLogo,        setStoreLogo]        = useState(() => localStorage.getItem("storeLogo") ?? null);
+  // tentativeSelections: { [shoeId]: { type: "raffle" | "preorder", size?: number, release: object } }
+  const [tentativeSelections, setTentativeSelections] = useState({});
   const [user,             setUser]             = useState(null);
   const [authLoading,      setAuthLoading]      = useState(true);
   const [saveSlots,        setSaveSlots]        = useState([]);
@@ -94,11 +97,18 @@ export default function App() {
   const effectiveInventoryCap = INVENTORY_CAP
     + (upgrades.storagePlus50  ? 50  : 0)
     + (upgrades.storagePlus100 ? 100 : 0);
+  const tentativeCost = Object.values(tentativeSelections).reduce((sum, sel) => {
+    if (sel.type === "preorder") {
+      return sum + Math.round(sel.release.retail * 1.20 * 11);
+    }
+    return sum + sel.release.retail; // raffle: assume win
+  }, 0);
   const projectedWeeklyTotal = WEEKLY_RENT + WEEKLY_UTIL
     + (loanBalance > 0 ? WEEKLY_LOAN : 0)
     + (upgrades.authTier === "app"      ? 100  : 0)
     + (upgrades.authTier === "employee" ? 1500 : 0)
-    + (upgrades.hasMarketing            ? 1500 : 0);
+    + (upgrades.hasMarketing            ? 1500 : 0)
+    + tentativeCost;
 
   // Always-fresh state snapshot for use inside stale closures (e.g. auth callbacks)
   const stateSnapshotRef = useRef(null);
@@ -111,6 +121,7 @@ export default function App() {
     bailoutContext, recentReleaseIds, hoursLeft, fakesReceived,
     featuredShoes, adActive, upgrades, keyMasterShoes,
     storeName, storeHandle, storeLogo,
+    tentativeSelections,
   };
 
   // ── Auth session ───────────────────────────────────────────────────────────
@@ -277,6 +288,7 @@ export default function App() {
     if (s.storeName)   setStoreName(s.storeName);
     if (s.storeHandle) setStoreHandle(s.storeHandle);
     if (s.storeLogo)   setStoreLogo(s.storeLogo);
+    setTentativeSelections(s.tentativeSelections ?? {});
     setShowGuide(false); // returning players don't need the guide
   }
 
@@ -296,6 +308,7 @@ export default function App() {
         bailoutContext, recentReleaseIds, hoursLeft, fakesReceived,
         featuredShoes, adActive, upgrades, keyMasterShoes,
         storeName, storeHandle, storeLogo,
+        tentativeSelections,
       },
       saved_at: savedAt,
     }).eq("id", currentSaveId).then(() => {
@@ -389,8 +402,44 @@ export default function App() {
       setCash(newCash);
       setLoanBalance(newLoan);
       setTab("inventory");
-      setPhase("between");
+      // At week boundary, go to release confirmation before between
+      if (day % 7 === 0) {
+        setPhase("releaseConfirm");
+      } else {
+        setPhase("between");
+      }
     }
+  }
+
+  function handleReleaseConfirmComplete(wonItems, totalCost) {
+    if (wonItems.length > 0) {
+      setCash(prev => prev - totalCost);
+      const newIds = wonItems.map(i => i.shoeId);
+      setRecentReleaseIds(newIds);
+      setInventory(prev => {
+        let inv = [...prev];
+        for (const item of wonItems) {
+          const existing = inv.find(i => i.shoeId === item.shoeId && i.size === item.size);
+          if (existing) {
+            const qty   = existing.quantity + 1;
+            const total = existing.avgPurchasePrice * existing.quantity + item.avgPurchasePrice;
+            inv = inv.map(i =>
+              i.shoeId === item.shoeId && i.size === item.size
+                ? { ...i, quantity: qty, avgPurchasePrice: Math.round(total / qty) }
+                : i
+            );
+          } else {
+            inv = [...inv, item];
+          }
+        }
+        return inv;
+      });
+    } else {
+      setRecentReleaseIds([]);
+    }
+    setTentativeSelections({});
+    setRafflesDoneForWeek(Math.ceil((day + 1) / 7));
+    setPhase("between");
   }
 
   function handleExtendLoan() {
@@ -684,6 +733,36 @@ export default function App() {
     );
   }
 
+  if (phase === "releaseConfirm") {
+    const weekNumber = Math.ceil(day / 7);
+    const releases   = generateWeeklyReleases(releaseCalendar, weekNumber);
+    // Convert tentative selections into raffle/preorder entries for RaffleScreen
+    const raffleEntries = {};
+    const preorderSet   = new Set();
+    for (const [shoeId, sel] of Object.entries(tentativeSelections)) {
+      if (sel.type === "raffle") raffleEntries[shoeId] = sel.size;
+      else if (sel.type === "preorder") preorderSet.add(shoeId);
+    }
+    return (
+      <RaffleScreen
+        releases={releases}
+        cash={cash}
+        weekNumber={weekNumber}
+        inventoryCount={inventoryCount}
+        inventoryCap={effectiveInventoryCap}
+        dailyMarkets={dailyMarkets}
+        initialRaffleEntries={raffleEntries}
+        initialPreorders={preorderSet}
+        onComplete={handleReleaseConfirmComplete}
+        onSkip={() => {
+          setTentativeSelections({});
+          setRafflesDoneForWeek(weekNumber);
+          setPhase("between");
+        }}
+      />
+    );
+  }
+
   if (phase === "photo") {
     return (
       <PhotoPostScreen
@@ -701,8 +780,9 @@ export default function App() {
     const currentWeek  = Math.ceil(day / 7);
     const rafflesReady = day >= 8 && day % 7 === 1 && rafflesDoneForWeek < currentWeek;
     const isWeekBoundary = day % 7 === 1 && day > 1;
-    const betweenTab     = isWeekBoundary && ["inventory", "growth"].includes(tab) ? tab
+    const betweenTab     = isWeekBoundary && ["inventory", "growth", "releases"].includes(tab) ? tab
                          : isWeekBoundary ? "growth"
+                         : ["inventory", "releases"].includes(tab) ? tab
                          : "inventory";
     return (
       <div>
@@ -777,9 +857,26 @@ export default function App() {
           />
         )}
 
+        {betweenTab === "releases" && (
+          <ReleasesTab
+            releaseCalendar={releaseCalendar}
+            day={day}
+            dailyMarkets={dailyMarkets}
+            brandTrends={brandTrends}
+            tentativeSelections={tentativeSelections}
+            onSelectionsChange={setTentativeSelections}
+            cash={cash}
+            inventoryCount={inventoryCount}
+            inventoryCap={effectiveInventoryCap}
+          />
+        )}
+
         <div className="bottom-nav">
           <button className={betweenTab === "inventory" ? "active" : ""} onClick={() => setTab("inventory")}>
             Inventory
+          </button>
+          <button className={betweenTab === "releases" ? "active" : ""} onClick={() => setTab("releases")}>
+            Releases
           </button>
           {isWeekBoundary && (
             <button className={betweenTab === "growth" ? "active" : ""} onClick={() => setTab("growth")}>
@@ -928,6 +1025,20 @@ export default function App() {
         />
       )}
 
+      {tab === "releases" && (
+        <ReleasesTab
+          releaseCalendar={releaseCalendar}
+          day={day}
+          dailyMarkets={dailyMarkets}
+          brandTrends={brandTrends}
+          tentativeSelections={tentativeSelections}
+          onSelectionsChange={setTentativeSelections}
+          cash={cash}
+          inventoryCount={inventoryCount}
+          inventoryCap={effectiveInventoryCap}
+        />
+      )}
+
       <div className="bottom-nav">
         <button className={tab === "customers"    ? "active" : ""} onClick={() => setTab("customers")}>
           Customers
@@ -937,6 +1048,9 @@ export default function App() {
         </button>
         <button className={tab === "inventory"    ? "active" : ""} onClick={() => setTab("inventory")}>
           Inventory
+        </button>
+        <button className={tab === "releases"     ? "active" : ""} onClick={() => setTab("releases")}>
+          Releases
         </button>
         <button className={tab === "expenses"     ? "active" : ""} onClick={() => setTab("expenses")}>
           Expenses

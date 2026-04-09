@@ -49,6 +49,45 @@ export const CATALOG = [
   // ── Air Jordan 7 ──────────────────────────────────────────────────────────
   { id: "aj7-raptor",              brand: "Jordan", style: "Jordan 7", model: "Air Jordan 7 Retro", colorway: "Raptor",         baseMarket: 385, retail: 190 },
   { id: "aj7-olympic",             brand: "Jordan", style: "Jordan 7", model: "Air Jordan 7 Retro", colorway: "Olympic",        baseMarket: 305, retail: 190 },
+  { id: "aj7-hare",                brand: "Jordan", style: "Jordan 7", model: "Air Jordan 7 Retro", colorway: "Hare",           baseMarket: 420, retail: 190 },
+  { id: "aj7-cardinal",            brand: "Jordan", style: "Jordan 7", model: "Air Jordan 7 Retro", colorway: "Cardinal",       baseMarket: 280, retail: 190 },
+  { id: "aj7-flint",               brand: "Jordan", style: "Jordan 7", model: "Air Jordan 7 Retro", colorway: "Flint",          baseMarket: 295, retail: 190 },
+  { id: "aj7-bordeaux",            brand: "Jordan", style: "Jordan 7", model: "Air Jordan 7 Retro", colorway: "Bordeaux",       baseMarket: 320, retail: 190 },
+  { id: "aj7-chambray",            brand: "Jordan", style: "Jordan 7", model: "Air Jordan 7 Retro", colorway: "Chambray",       baseMarket: 265, retail: 190 },
+
+  // ── Air Jordan 8 ──────────────────────────────────────────────────────────
+  { id: "aj8-aqua",                brand: "Jordan", style: "Jordan 8", model: "Air Jordan 8 Retro", colorway: "Aqua",           baseMarket: 330, retail: 210 },
+  { id: "aj8-bugs-bunny",          brand: "Jordan", style: "Jordan 8", model: "Air Jordan 8 Retro", colorway: "Bugs Bunny",     baseMarket: 395, retail: 210 },
+  { id: "aj8-playoffs",            brand: "Jordan", style: "Jordan 8", model: "Air Jordan 8 Retro", colorway: "Playoffs",       baseMarket: 280, retail: 210 },
+  { id: "aj8-chrome",              brand: "Jordan", style: "Jordan 8", model: "Air Jordan 8 Retro", colorway: "Chrome/Cardinal", baseMarket: 260, retail: 210 },
+
+  // ── Air Jordan 9 ──────────────────────────────────────────────────────────
+  { id: "aj9-space-jam",           brand: "Jordan", style: "Jordan 9", model: "Air Jordan 9 Retro", colorway: "Space Jam",      baseMarket: 310, retail: 190 },
+  { id: "aj9-olive",               brand: "Jordan", style: "Jordan 9", model: "Air Jordan 9 Retro", colorway: "Olive",          baseMarket: 250, retail: 190 },
+  { id: "aj9-university-blue",     brand: "Jordan", style: "Jordan 9", model: "Air Jordan 9 Retro", colorway: "University Blue", baseMarket: 270, retail: 190 },
+  { id: "aj9-white-black",         brand: "Jordan", style: "Jordan 9", model: "Air Jordan 9 Retro", colorway: "White/Black",    baseMarket: 225, retail: 190 },
+
+  // ── Air Jordan 10 ─────────────────────────────────────────────────────────
+  { id: "aj10-shadow",             brand: "Jordan", style: "Jordan 10", model: "Air Jordan 10 Retro", colorway: "Shadow",       baseMarket: 265, retail: 190 },
+  { id: "aj10-powder-blue",        brand: "Jordan", style: "Jordan 10", model: "Air Jordan 10 Retro", colorway: "Powder Blue",  baseMarket: 240, retail: 190 },
+  { id: "aj10-steel",              brand: "Jordan", style: "Jordan 10", model: "Air Jordan 10 Retro", colorway: "Steel",        baseMarket: 220, retail: 190 },
+  { id: "aj10-chicago",            brand: "Jordan", style: "Jordan 10", model: "Air Jordan 10 Retro", colorway: "Chicago",      baseMarket: 290, retail: 190 },
+  { id: "aj10-ovo",                brand: "Jordan", style: "Jordan 10", model: "Air Jordan 10 Retro", colorway: "OVO White",    baseMarket: 480, isGrail: true },
+
+  // ── Air Jordan 12 ─────────────────────────────────────────────────────────
+  { id: "aj12-flu-game",           brand: "Jordan", style: "Jordan 12", model: "Air Jordan 12 Retro", colorway: "Flu Game",     baseMarket: 500, retail: 200 },
+  { id: "aj12-taxi",               brand: "Jordan", style: "Jordan 12", model: "Air Jordan 12 Retro", colorway: "Taxi",         baseMarket: 360, retail: 200 },
+  { id: "aj12-unc",                brand: "Jordan", style: "Jordan 12", model: "Air Jordan 12 Retro", colorway: "UNC",          baseMarket: 390, retail: 200 },
+  { id: "aj12-french-blue",        brand: "Jordan", style: "Jordan 12", model: "Air Jordan 12 Retro", colorway: "French Blue",  baseMarket: 280, retail: 200 },
+  { id: "aj12-cherry",             brand: "Jordan", style: "Jordan 12", model: "Air Jordan 12 Retro", colorway: "Cherry",       baseMarket: 245, retail: 200 },
+  { id: "aj12-playoffs",           brand: "Jordan", style: "Jordan 12", model: "Air Jordan 12 Retro", colorway: "Playoffs",     baseMarket: 335, retail: 200 },
+
+  // ── Air Jordan 13 ─────────────────────────────────────────────────────────
+  { id: "aj13-he-got-game",        brand: "Jordan", style: "Jordan 13", model: "Air Jordan 13 Retro", colorway: "He Got Game",  baseMarket: 350, retail: 200 },
+  { id: "aj13-black-cat",          brand: "Jordan", style: "Jordan 13", model: "Air Jordan 13 Retro", colorway: "Black Cat",    baseMarket: 230, retail: 200 },
+  { id: "aj13-flint",              brand: "Jordan", style: "Jordan 13", model: "Air Jordan 13 Retro", colorway: "Flint",        baseMarket: 275, retail: 200 },
+  { id: "aj13-bred",               brand: "Jordan", style: "Jordan 13", model: "Air Jordan 13 Retro", colorway: "Bred",         baseMarket: 310, retail: 200 },
+  { id: "aj13-altitude",           brand: "Jordan", style: "Jordan 13", model: "Air Jordan 13 Retro", colorway: "Altitude",     baseMarket: 290, retail: 200 },
 
   // ── Air Jordan 11 ─────────────────────────────────────────────────────────
   { id: "aj11-space-jam",          brand: "Jordan", style: "Jordan 11", model: "Air Jordan 11 Retro", colorway: "Space Jam",  baseMarket: 490, retail: 225 },
@@ -68,10 +107,20 @@ export const CATALOG = [
   { id: "am1-atmos-elephant",      brand: "Nike", style: "Air Max 1", model: "Air Max 1", colorway: "Atmos Elephant",     baseMarket: 8500, isGrail: true },
   { id: "am1-patta-purple-denim",  brand: "Nike", style: "Air Max 1", model: "Air Max 1", colorway: "Patta Purple Denim", baseMarket: 1530, isGrail: true },
   { id: "am1-patta-cherrywood",    brand: "Nike", style: "Air Max 1", model: "Air Max 1", colorway: "Patta Cherrywood",   baseMarket: 600, isGrail: true },
+  { id: "am1-anniversary-red",    brand: "Nike", style: "Air Max 1", model: "Air Max 1", colorway: "Anniversary Red",    baseMarket: 190, retail: 120 },
+  { id: "am1-pompidou",           brand: "Nike", style: "Air Max 1", model: "Air Max 1", colorway: "Pompidou",           baseMarket: 260, retail: 120 },
+  { id: "am1-jewel-red",          brand: "Nike", style: "Air Max 1", model: "Air Max 1", colorway: "Jewel Red",          baseMarket: 175, retail: 120 },
+  { id: "am1-ugly-duckling-og",   brand: "Nike", style: "Air Max 1", model: "Air Max 1", colorway: "Ugly Duckling Patta Pack", baseMarket: 1800, isGrail: true },
+  { id: "am1-wu-tang",            brand: "Nike", style: "Air Max 1", model: "Air Max 1", colorway: "Wu-Tang",            baseMarket: 12000, isGrail: true },
 
   // ── Nike Air Max 90 ───────────────────────────────────────────────────────
   { id: "am90-infrared",           brand: "Nike", style: "Air Max 90", model: "Air Max 90", colorway: "Infrared",    baseMarket: 130, retail: 130 },
   { id: "am90-white",              brand: "Nike", style: "Air Max 90", model: "Air Max 90", colorway: "White/White", baseMarket: 120, retail: 110 },
+  { id: "am90-cool-grey",          brand: "Nike", style: "Air Max 90", model: "Air Max 90", colorway: "Cool Grey",   baseMarket: 140, retail: 120 },
+  { id: "am90-cement-grey",        brand: "Nike", style: "Air Max 90", model: "Air Max 90", colorway: "Cement Grey", baseMarket: 135, retail: 120 },
+  { id: "am90-bacon",              brand: "Nike", style: "Air Max 90", model: "Air Max 90", colorway: "Bacon",       baseMarket: 700, isGrail: true },
+  { id: "am90-ow-desert-ore",      brand: "Nike", style: "Air Max 90", model: "Air Max 90", colorway: "Off-White Desert Ore", baseMarket: 550, isGrail: true },
+  { id: "am90-clot-kiss-water",    brand: "Nike", style: "Air Max 90", model: "Air Max 90", colorway: "CLOT Kiss of Death", baseMarket: 2800, isGrail: true },
 
   // ── Nike Air Max 95 ───────────────────────────────────────────────────────
   { id: "am95-neon",               brand: "Nike", style: "Air Max 95", model: "Air Max 95", colorway: "Neon",             baseMarket: 200, retail: 160 },
@@ -79,6 +128,11 @@ export const CATALOG = [
   { id: "am95-grape",              brand: "Nike", style: "Air Max 95", model: "Air Max 95", colorway: "Grape",            baseMarket: 150, retail: 160 },
   { id: "am95-comet-red",          brand: "Nike", style: "Air Max 95", model: "Air Max 95", colorway: "Comet Red",        baseMarket: 150, retail: 160 },
   { id: "am95-atmos-animal",       brand: "Nike", style: "Air Max 95", model: "Air Max 95", colorway: "Atmos Animal Pack", baseMarket: 500, isGrail: true },
+  { id: "am95-black",              brand: "Nike", style: "Air Max 95", model: "Air Max 95", colorway: "Black",            baseMarket: 140, retail: 160 },
+  { id: "am95-varsity-royal",      brand: "Nike", style: "Air Max 95", model: "Air Max 95", colorway: "Varsity Royal",    baseMarket: 165, retail: 160 },
+  { id: "am95-white-grey",         brand: "Nike", style: "Air Max 95", model: "Air Max 95", colorway: "White/Grey",       baseMarket: 155, retail: 160 },
+  { id: "am95-jelly-pack",         brand: "Nike", style: "Air Max 95", model: "Air Max 95", colorway: "Jelly Pack White", baseMarket: 450, isGrail: true },
+  { id: "am95-supreme-black",      brand: "Nike", style: "Air Max 95", model: "Air Max 95", colorway: "Supreme Black",    baseMarket: 600, isGrail: true },
 
   // ── Nike Air Max 97 ───────────────────────────────────────────────────────
   { id: "am97-menta",              brand: "Nike", style: "Air Max 97", model: "Air Max 97",   colorway: "Menta",           baseMarket: 500, isGrail: true },
@@ -104,7 +158,23 @@ export const CATALOG = [
   { id: "sb-tiffany",              brand: "Nike", style: "SB Dunk", model: "SB Dunk Low", colorway: "Tiffany",       baseMarket: 1260,  isGrail: true },
   { id: "sb-heineken",             brand: "Nike", style: "SB Dunk", model: "SB Dunk Low", colorway: "Heineken",      baseMarket: 1200,  isGrail: true },
   { id: "sb-cactus-jack",          brand: "Nike", style: "SB Dunk", model: "SB Dunk Low", colorway: "Cactus Jack",   baseMarket: 730,  isGrail: true },
-  { id: "sb-blue-lobster",         brand: "Nike", style: "SB Dunk", model: "SB Dunk Low", colorway: "Blue Lobster",  baseMarket: 830,  isGrail: true },
+  { id: "sb-blue-lobster",         brand: "Nike", style: "SB Dunk", model: "SB Dunk Low", colorway: "Blue Lobster",      baseMarket: 830,  isGrail: true },
+  { id: "sb-freddy-krueger",       brand: "Nike", style: "SB Dunk", model: "SB Dunk Low", colorway: "Freddy Krueger",    baseMarket: 4500, isGrail: true },
+  { id: "sb-mf-doom",              brand: "Nike", style: "SB Dunk", model: "SB Dunk Low", colorway: "MF Doom",           baseMarket: 3800, isGrail: true },
+  { id: "sb-supreme-red",          brand: "Nike", style: "SB Dunk", model: "SB Dunk Low", colorway: "Supreme Red",       baseMarket: 1100, isGrail: true },
+  { id: "sb-what-the-dunk",        brand: "Nike", style: "SB Dunk", model: "SB Dunk Low", colorway: "What The Dunk",     baseMarket: 2500, isGrail: true },
+  { id: "sb-pushead",              brand: "Nike", style: "SB Dunk", model: "SB Dunk Low", colorway: "Pushead",           baseMarket: 2800, isGrail: true },
+  { id: "sb-denim-lebron",         brand: "Nike", style: "SB Dunk", model: "SB Dunk Low", colorway: "De La Soul",        baseMarket: 750,  isGrail: true },
+  { id: "sb-grateful-dead-bear",   brand: "Nike", style: "SB Dunk", model: "SB Dunk Low", colorway: "Grateful Dead Bear", baseMarket: 600, isGrail: true },
+  { id: "sb-travis-scott-jackboys", brand: "Nike", style: "SB Dunk", model: "SB Dunk Low", colorway: "Travis Scott Jackboys", baseMarket: 1400, isGrail: true },
+
+  // ── Nike SB Dunk High ─────────────────────────────────────────────────────
+  { id: "sb-high-supreme-red",     brand: "Nike", style: "SB Dunk", model: "SB Dunk High", colorway: "Supreme Red",      baseMarket: 900,  isGrail: true },
+  { id: "sb-high-supreme-white",   brand: "Nike", style: "SB Dunk", model: "SB Dunk High", colorway: "Supreme White Stars", baseMarket: 850, isGrail: true },
+  { id: "sb-high-unkle",           brand: "Nike", style: "SB Dunk", model: "SB Dunk High", colorway: "UNKLE",             baseMarket: 2600, isGrail: true },
+  { id: "sb-high-born-portland",   brand: "Nike", style: "SB Dunk", model: "SB Dunk High", colorway: "Born in Portland",  baseMarket: 3500, isGrail: true },
+  { id: "sb-high-skunk",           brand: "Nike", style: "SB Dunk", model: "SB Dunk High", colorway: "Skunk",             baseMarket: 1400, isGrail: true },
+  { id: "sb-high-reese-forbes",    brand: "Nike", style: "SB Dunk", model: "SB Dunk High", colorway: "Reese Forbes Denim", baseMarket: 1800, isGrail: true },
 
   // ── Adidas Yeezy ──────────────────────────────────────────────────────────
   { id: "yeezy-350-zebra",         brand: "Adidas", style: "Yeezy 350",      model: "Yeezy Boost 350 V2",  colorway: "Zebra",          baseMarket: 285, retail: 230 },
@@ -123,6 +193,21 @@ export const CATALOG = [
   { id: "adidas-gazelle-indoor",   brand: "Adidas", style: "Gazelle",        model: "Gazelle Indoor",      colorway: "Collegiate Green", baseMarket: 155, retail: 110 },
   { id: "adidas-campus-00s",       brand: "Adidas", style: "Campus",         model: "Campus 00s",          colorway: "Core Black",     baseMarket: 130, retail: 100 },
   { id: "adidas-forum-low",        brand: "Adidas", style: "Forum",          model: "Forum Low",           colorway: "White/Blue",     baseMarket: 110, retail: 90  },
+  { id: "adidas-yeezy-350-pirate", brand: "Adidas", style: "Yeezy 350",      model: "Yeezy Boost 350",     colorway: "Pirate Black",   baseMarket: 980, isGrail: true },
+  { id: "adidas-yeezy-350-moonrock", brand: "Adidas", style: "Yeezy 350",    model: "Yeezy Boost 350",     colorway: "Moonrock",       baseMarket: 900, isGrail: true },
+  { id: "adidas-yeezy-350-oxford", brand: "Adidas", style: "Yeezy 350",      model: "Yeezy Boost 350",     colorway: "Oxford Tan",     baseMarket: 850, isGrail: true },
+  { id: "adidas-yeezy-700-mnvn",   brand: "Adidas", style: "Yeezy 700",      model: "Yeezy 700 MNVN",      colorway: "Bone",           baseMarket: 220, retail: 220 },
+  { id: "adidas-nmd-r1-og",        brand: "Adidas", style: "NMD",            model: "NMD R1 OG",           colorway: "Black/Red",      baseMarket: 450, isGrail: true },
+  { id: "adidas-ultraboost-og",    brand: "Adidas", style: "Ultra Boost",    model: "Ultra Boost 1.0",     colorway: "Core Black",     baseMarket: 320, retail: 180 },
+  { id: "adidas-stan-smith-og",    brand: "Adidas", style: "Stan Smith",     model: "Stan Smith",          colorway: "White/Green",    baseMarket: 110, retail: 90  },
+  { id: "adidas-ozweego",          brand: "Adidas", style: "Ozweego",        model: "Ozweego",             colorway: "Ash Pearl",      baseMarket: 130, retail: 110 },
+  { id: "adidas-wales-bonner-samba", brand: "Adidas", style: "Samba",        model: "Samba",               colorway: "Wales Bonner White", baseMarket: 480, isGrail: true },
+  { id: "adidas-bad-bunny-forum",  brand: "Adidas", style: "Forum",          model: "Forum Low",           colorway: "Bad Bunny Blue", baseMarket: 550, isGrail: true },
+  { id: "adidas-bad-bunny-response", brand: "Adidas", style: "Response CL", model: "Response CL",         colorway: "Bad Bunny Green", baseMarket: 620, isGrail: true },
+  { id: "adidas-pharrell-humanrace", brand: "Adidas", style: "Humanrace",   model: "Humanrace Sichona",   colorway: "Core Black",     baseMarket: 450, isGrail: true },
+  { id: "adidas-prada-forum-high", brand: "Adidas", style: "Forum",          model: "Forum High",          colorway: "Prada White",    baseMarket: 800, isGrail: true },
+  { id: "adidas-samba-ballet-pink", brand: "Adidas", style: "Samba",         model: "Samba OG",            colorway: "Ballet Pink",    baseMarket: 200, retail: 100 },
+  { id: "adidas-handball-spezial-blue", brand: "Adidas", style: "Handball Spezial", model: "Handball Spezial", colorway: "Blue Bird/White", baseMarket: 185, retail: 100 },
 
   // ── New Balance ───────────────────────────────────────────────────────────
   { id: "nb-550-white-green",      brand: "New Balance", style: "NB 550",   model: "550",   colorway: "White/Green",          baseMarket: 130, retail: 120 },
@@ -140,6 +225,18 @@ export const CATALOG = [
   { id: "nb-2002r-mist",           brand: "New Balance", style: "NB 2002R", model: "2002R", colorway: "Protection Pack Mist", baseMarket: 175, retail: 130 },
   { id: "nb-joe-freshgoods-990v3", brand: "New Balance", style: "NB 990",   model: "990v3", colorway: "Joe Freshgoods Pink",  baseMarket: 385, isGrail: true },
   { id: "nb-ald-990v6",            brand: "New Balance", style: "NB 990",   model: "990v6", colorway: "Aime Leon Dore Blue",  baseMarket: 430, isGrail: true },
+  { id: "nb-teddy-santis-990v2",   brand: "New Balance", style: "NB 990",   model: "990v2", colorway: "Teddy Santis Made in USA", baseMarket: 380, isGrail: true },
+  { id: "nb-bodega-990v6",         brand: "New Balance", style: "NB 990",   model: "990v6", colorway: "Bodega Grey",          baseMarket: 360, isGrail: true },
+  { id: "nb-salehe-2002r",         brand: "New Balance", style: "NB 2002R", model: "2002R", colorway: "Salehe Bembury Yurt",  baseMarket: 560, isGrail: true },
+  { id: "nb-miu-miu-530",          brand: "New Balance", style: "NB 530",   model: "530",   colorway: "Miu Miu Grey",         baseMarket: 900, isGrail: true },
+  { id: "nb-joe-freshgoods-992",   brand: "New Balance", style: "NB 992",   model: "992",   colorway: "Joe Freshgoods White Chocolate", baseMarket: 650, isGrail: true },
+  { id: "nb-kith-990v4",           brand: "New Balance", style: "NB 990",   model: "990v4", colorway: "Kith Pink",            baseMarket: 480, isGrail: true },
+  { id: "nb-1300-made-usa",        brand: "New Balance", style: "NB 1300",  model: "1300",  colorway: "Made in USA Grey",     baseMarket: 350, retail: 200 },
+  { id: "nb-860v2",                brand: "New Balance", style: "NB 860",   model: "860v2", colorway: "Grey/Blue",            baseMarket: 260, retail: 150 },
+  { id: "nb-ald-827",              brand: "New Balance", style: "NB 827",   model: "827",   colorway: "Aime Leon Dore White", baseMarket: 220, isGrail: true },
+  { id: "nb-stone-island-574",     brand: "New Balance", style: "NB 574",   model: "574",   colorway: "Stone Island Blue",   baseMarket: 700, isGrail: true },
+  { id: "nb-550-ald-navy",         brand: "New Balance", style: "NB 550",   model: "550",   colorway: "Aime Leon Dore Navy",  baseMarket: 290, isGrail: true },
+  { id: "nb-2002r-protection",     brand: "New Balance", style: "NB 2002R", model: "2002R", colorway: "Protection Pack Rain Cloud", baseMarket: 210, retail: 130 },
 
   // ── Asics ─────────────────────────────────────────────────────────────────
   { id: "asics-gel-1130-cream",    brand: "Asics", style: "Gel-1130",    model: "Gel-1130",             colorway: "Cream/White",  baseMarket: 90,  retail: 90  },
@@ -152,6 +249,17 @@ export const CATALOG = [
   { id: "asics-gel-1090",          brand: "Asics", style: "Gel-1090",    model: "Gel-1090",             colorway: "White/Grey",   baseMarket: 105, retail: 90  },
   { id: "asics-kith-gel-lyte3",    brand: "Asics", style: "Gel-Lyte",    model: "Gel-Lyte III",         colorway: "Kith New York", baseMarket: 330, isGrail: true },
   { id: "asics-gel-quantum360",    brand: "Asics", style: "Gel-Quantum", model: "Gel-Quantum 360 VII",  colorway: "White/Coral",  baseMarket: 145, retail: 140 },
+  { id: "asics-gel-saga-white",   brand: "Asics", style: "Gel-Saga",    model: "Gel-Saga",             colorway: "White/Blue",   baseMarket: 115, retail: 100 },
+  { id: "asics-gel-lyte5-og",     brand: "Asics", style: "Gel-Lyte",    model: "Gel-Lyte V",           colorway: "White/Cream",  baseMarket: 140, retail: 120 },
+  { id: "asics-gel-sonoma",       brand: "Asics", style: "Gel-Sonoma",  model: "Gel-Sonoma 15-50",     colorway: "Clay/Brown",   baseMarket: 130, retail: 110 },
+  { id: "asics-kiko-gel-burst",   brand: "Asics", style: "Gel-Burst",   model: "Gel-Burst",            colorway: "Kiko Kostadinov Blue", baseMarket: 580, isGrail: true },
+  { id: "asics-gel-kahana-tr",    brand: "Asics", style: "Gel-Kahana",  model: "Gel-Kahana TR",        colorway: "Olive/Brown",  baseMarket: 125, retail: 110 },
+  { id: "asics-novablast3",       brand: "Asics", style: "Novablast",   model: "Novablast 3",          colorway: "White/Blue",   baseMarket: 135, retail: 120 },
+  { id: "asics-gel-1130-black",   brand: "Asics", style: "Gel-1130",    model: "Gel-1130",             colorway: "Black/White",  baseMarket: 100, retail: 90  },
+  { id: "asics-gt2160-pink",      brand: "Asics", style: "GT-2160",     model: "GT-2160",              colorway: "Pink/Cream",   baseMarket: 125, retail: 110 },
+  { id: "asics-gel-nyc-beige",    brand: "Asics", style: "Gel-NYC",     model: "Gel-NYC",              colorway: "Beige/Cream",  baseMarket: 130, retail: 110 },
+  { id: "asics-cecilie-gel-nimbus", brand: "Asics", style: "Gel-Nimbus", model: "Gel-Nimbus 9",        colorway: "Cecilie Bahnsen White", baseMarket: 480, isGrail: true },
+  { id: "asics-gel-terrain",      brand: "Asics", style: "Gel-Terrain", model: "Gel-Terrain",          colorway: "Cream/Olive",  baseMarket: 120, retail: 110 },
 ];
 
 export const AVAILABLE_SIZES = [7, 7.5, 8, 8.5, 9, 9.5, 10, 10.5, 11, 12, 13];
