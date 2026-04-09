@@ -198,7 +198,7 @@ export default function GrowthTab({ upgrades, cash, phase, day, onBuyUpgrade, st
       <OwnableCard upgradeKey="storagePlus100" title="Storage +100 Pairs" desc="Expand your inventory limit by 100 pairs. Stacks with +50." badge="$4,500" owned={storagePlus100} cost={4500} />
 
       <h4 className="upgrade-section-sub upgrade-sub-label" style={{ marginTop: 16 }}>Key Master</h4>
-      <OwnableCard upgradeKey="keyMaster" title="Key Master Vault" desc="Store up to 10 shoes permanently. Each earns 2% of live market low per day. 1% daily chance a customer wins one." badge="$5,000" owned={hasKeyMaster} cost={5000}>
+      <OwnableCard upgradeKey="keyMaster" title="Key Master Machine" desc="Store up to 10 shoes in a Key Master machine permanently. Each earns 2% of live market low per day. 1% daily chance a customer wins one." badge="$5,000" owned={hasKeyMaster} cost={5000}>
         {hasKeyMaster && <p className="upgrade-owned-note">Manage your vault in the Inventory tab.</p>}
       </OwnableCard>
 

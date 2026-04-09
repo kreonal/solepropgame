@@ -309,7 +309,7 @@ export default function InventoryTab({
       <h3>Key Master</h3>
       {!hasKeyMaster ? (
         <div className="km-locked-card card">
-          <div className="km-locked-title">Key Master Vault</div>
+          <div className="km-locked-title">Key Master Machine</div>
           <div className="km-locked-desc">Unlock in the Growth tab to earn passive income from your rarest shoes.</div>
         </div>
       ) : (
