@@ -19,8 +19,6 @@ export default function InventoryTab({
   headerSubtitle,
   inventoryCount,
   effectiveInventoryCap = 50,
-  featuredShoes,
-  onFeatureToggle,
   adActive,
   onBuyAd,
   cash,
@@ -264,37 +262,9 @@ export default function InventoryTab({
       )}
 
       {/* ── Marketing ── */}
-      {onFeatureToggle && (
+      {onBuyAd && (
         <>
           <h3>Marketing</h3>
-          <div className="marketing-card card">
-            <div className="marketing-card-top">
-              <div>
-                <div className="marketing-card-title">End of Day Inventory Photo</div>
-                <div className="marketing-card-desc">Feature up to 10 pairs — guarantees a buyer for each next day.</div>
-              </div>
-              <span className="marketing-card-badge free-badge">FREE</span>
-            </div>
-            <div className="feature-chip-grid">
-              {inventory.map(item => {
-                const isFeatured = featuredShoes.some(f => f.shoeId === item.shoeId && f.size === item.size);
-                const atCap = !isFeatured && featuredShoes.length >= 10;
-                return (
-                  <button
-                    key={`${item.shoeId}-${item.size}`}
-                    className={`feature-chip${isFeatured ? " selected" : ""}${atCap ? " disabled" : ""}`}
-                    disabled={atCap}
-                    onClick={() => onFeatureToggle(item.shoeId, item.size)}
-                  >
-                    {item.model} {item.colorway} Sz {item.size}
-                  </button>
-                );
-              })}
-              {inventory.length === 0 && <p className="marketing-empty">No inventory to feature.</p>}
-            </div>
-            <div className="marketing-card-footer">{featuredShoes.length} / 10 featured</div>
-          </div>
-
           <div className={`marketing-card card${adActive ? " marketing-card-active" : ""}`}>
             <div className="marketing-card-top">
               <div>
@@ -426,7 +396,7 @@ export default function InventoryTab({
           )}
           {onStartDay && (
             <button className="primary-btn" onClick={onStartDay} style={{ flex: 1 }}>
-              Open Shop — Start Day {day} →
+              Post to Social & Open Shop →
             </button>
           )}
         </div>

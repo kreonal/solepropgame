@@ -12,6 +12,7 @@ import StartupGuide from "./StartupGuide";
 import AuthModal from "./AuthScreen";
 import SaveSelectScreen from "./SaveSelectScreen";
 import GrowthTab from "./GrowthTab";
+import PhotoPostScreen from "./PhotoPostScreen";
 import {
   generateDailyMarkets,
   generateCustomers,
@@ -381,10 +382,10 @@ export default function App() {
   }
 
   // ── Between → start next day ───────────────────────────────────────────────
-  function handleStartNextDay() {
+  function handleStartNextDay(featured = []) {
     const stockedItems = inventory.map(i => ({ shoeId: i.shoeId, size: i.size }));
     const sellBuyers   = generateSellChanceBuyers(inventory, dailyMarkets, brandTrends, upgrades.hasMarketing);
-    const regularCust  = generateCustomers(dailyMarkets, stockedItems, day, recentReleaseIds, featuredShoes, adActive, upgrades.hasMarketing);
+    const regularCust  = generateCustomers(dailyMarkets, stockedItems, day, recentReleaseIds, featured, adActive, upgrades.hasMarketing);
     setCustomers([...sellBuyers, ...regularCust]);
     setInventory(prev => prev.map(i => ({ ...i, daysListed: (i.daysListed ?? 0) + 1 })));
     setTransactions([]);
@@ -467,15 +468,6 @@ export default function App() {
         shoeId, brand: shoe.brand, model: shoe.model, colorway: shoe.colorway,
         size, quantity: 1, avgPurchasePrice: 0, listPrice: 0,
       }];
-    });
-  }
-
-  function handleFeatureToggle(shoeId, size) {
-    setFeaturedShoes(prev => {
-      const exists = prev.some(f => f.shoeId === shoeId && f.size === size);
-      if (exists) return prev.filter(f => !(f.shoeId === shoeId && f.size === size));
-      if (prev.length >= 10) return prev;
-      return [...prev, { shoeId, size }];
     });
   }
 
@@ -669,6 +661,17 @@ export default function App() {
     );
   }
 
+  if (phase === "photo") {
+    return (
+      <PhotoPostScreen
+        inventory={inventory}
+        day={day}
+        onPost={(featured) => handleStartNextDay(featured)}
+        onSkip={() => handleStartNextDay([])}
+      />
+    );
+  }
+
   if (phase === "between") {
     const currentWeek  = Math.ceil(day / 7);
     const rafflesReady = day >= 8 && day % 7 === 1 && rafflesDoneForWeek < currentWeek;
@@ -718,13 +721,11 @@ export default function App() {
             brandTrends={brandTrends}
             missedDemand={missedDemand}
             canEditPrices={true}
-            onStartDay={handleStartNextDay}
+            onStartDay={() => setPhase("photo")}
             onRaffle={rafflesReady ? () => setPhase("raffle") : null}
             day={fmtDay(day)}
             inventoryCount={inventoryCount}
             effectiveInventoryCap={effectiveInventoryCap}
-            featuredShoes={featuredShoes}
-            onFeatureToggle={handleFeatureToggle}
             adActive={adActive}
             onBuyAd={handleBuyAd}
             cash={cash}
