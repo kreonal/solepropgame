@@ -1490,6 +1490,18 @@ button:active { transform: scale(0.98); }
 }
 
 /* ── Inspection gate ─────────────────────────────────────────────────── */
+.gate-ask-single {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+  margin: 4px 0 0;
+}
+.gate-ask-total {
+  font-size: 12px;
+  color: var(--text-2);
+  margin: 4px 0 0;
+}
+
 .inspection-prompt {
   font-size: 15px;
   font-weight: 600;

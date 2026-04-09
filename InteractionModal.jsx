@@ -390,19 +390,30 @@ export default function InteractionModal({
             </div>
             <p className="modal-shoe-name">{customerItems.length} items</p>
             <div className="multi-item-list">
-              {customerItems.map((ci, k) => (
-                <div key={k} className="multi-item-row">
-                  <span className="multi-item-name">{ci.shoe.brand} {ci.shoe.model} — {ci.shoe.colorway}{trendEmoji(ci.shoe.brand, brandTrends)}</span>
-                  <span className="multi-item-size">Sz {ci.size}</span>
-                </div>
-              ))}
+              {customerItems.map((ci, k) => {
+                const itemAsk = type === "SELL"
+                  ? Math.round(ci.marketRange.mid * traits.sellAskMult)
+                  : ci.marketRange.mid;
+                return (
+                  <div key={k} className="multi-item-row">
+                    <span className="multi-item-name">{ci.shoe.brand} {ci.shoe.model} — {ci.shoe.colorway}{trendEmoji(ci.shoe.brand, brandTrends)}</span>
+                    <span className="multi-item-size">Sz {ci.size}</span>
+                    <span className="multi-item-mkt">{type === "SELL" ? "Asking" : "Valued"} ${itemAsk}</span>
+                  </div>
+                );
+              })}
             </div>
+            {type === "SELL" && <p className="gate-ask-total">Total asking: <strong>${totalInitAsk}</strong></p>}
+            {type === "TRADE" && <p className="gate-ask-total">Combined value: <strong>${theirMarket}</strong></p>}
           </>
         ) : (
           <>
             <ShoeImage shoeId={shoe.id} />
             <p className="modal-shoe-name">{shoe.brand} {shoe.model} — {shoe.colorway}{trendEmoji(shoe.brand, brandTrends)}</p>
             <p className="modal-size">Size {size}</p>
+            <p className="gate-ask-single">
+              {type === "SELL" ? `Asking $${initAsk}` : `Valued ~$${mktMid}`}
+            </p>
           </>
         )}
         <p className="inspection-prompt">How do you want to handle this?</p>
