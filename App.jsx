@@ -80,9 +80,9 @@ export default function App() {
   const [keyMasterShoes,   setKeyMasterShoes]   = useState([]);
   // keyMasterShoe: { shoeId, brand, model, colorway, size, totalEarned }
   const [endOfDayKm,       setEndOfDayKm]       = useState({ results: [], income: 0 });
-  const [storeName,        setStoreName]        = useState(() => localStorage.getItem("storeName") ?? "Sole Proprietor");
-  const [storeHandle,      setStoreHandle]      = useState(() => localStorage.getItem("storeHandle") ?? "sole_prop");
-  const [storeLogo,        setStoreLogo]        = useState(() => localStorage.getItem("storeLogo") ?? null);
+  const [storeName,        setStoreName]        = useState("Sole Proprietor");
+  const [storeHandle,      setStoreHandle]      = useState("sole_prop");
+  const [storeLogo,        setStoreLogo]        = useState(null);
   // tentativeSelections: { [shoeId]: { type: "raffle" | "preorder", size?: number, release: object } }
   const [tentativeSelections, setTentativeSelections] = useState({});
   const [user,             setUser]             = useState(null);
@@ -161,7 +161,7 @@ export default function App() {
     // New user with no saves: auto-save the current guest session
     if (saves.length === 0) {
       const snapshot = stateSnapshotRef.current;
-      const saveName = fmtDay(snapshot.day);
+      const saveName = `${snapshot.storeName ?? "Sole Proprietor"} ${fmtDay(snapshot.day)}`;
       const savedAt  = new Date().toISOString();
       const { data: inserted } = await supabase
         .from("game_saves")
@@ -193,7 +193,7 @@ export default function App() {
     const freshState = buildFreshState();
     const { data } = await supabase
       .from("game_saves")
-      .insert({ user_id: user.id, name: fmtDay(1), state: freshState, saved_at: new Date().toISOString() })
+      .insert({ user_id: user.id, name: `${freshState.storeName ?? "Sole Proprietor"} ${fmtDay(1)}`, state: freshState, saved_at: new Date().toISOString() })
       .select("id")
       .single();
     if (data?.id) {
@@ -296,7 +296,7 @@ export default function App() {
   useEffect(() => {
     if (!user || authLoading || !currentSaveId) return;
     const savedAt = new Date().toISOString();
-    const saveName = fmtDay(day);
+    const saveName = `${storeName} ${fmtDay(day)}`;
     supabase.from("game_saves").update({
       name: saveName,
       state: {
@@ -320,11 +320,6 @@ export default function App() {
 
   // ── Auto-save store identity on change ────────────────────────────────────
   useEffect(() => {
-    if (storeName) localStorage.setItem("storeName", storeName);
-    if (storeHandle) localStorage.setItem("storeHandle", storeHandle);
-    if (storeLogo) localStorage.setItem("storeLogo", storeLogo);
-    else localStorage.removeItem("storeLogo");
-
     if (!user || authLoading || !currentSaveId) return;
     const snap = stateSnapshotRef.current;
     supabase.from("game_saves").update({
