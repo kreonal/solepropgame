@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const UPGRADE_META = {
   storagePlus50:    { label: "Storage +50 Pairs",             cost: 2000,  recurring: false },
@@ -11,7 +11,7 @@ const UPGRADE_META = {
   keyMaster:        { label: "Key Master Vault",              cost: 5000,  recurring: false },
 };
 
-export default function GrowthTab({ upgrades, cash, phase, day, onBuyUpgrade }) {
+export default function GrowthTab({ upgrades, cash, phase, day, onBuyUpgrade, storeName, storeHandle, storeLogo, onStoreNameChange, onStoreHandleChange, onStoreLogoChange }) {
   const canBuy = phase === "between";
   // Recurring upgrades (auth, marketing) only changeable at week boundaries (day 8, 15, 22...)
   const canChangeRecurring = canBuy && day % 7 === 1 && day > 1;
@@ -132,11 +132,62 @@ export default function GrowthTab({ upgrades, cash, phase, day, onBuyUpgrade }) 
     );
   }
 
+  const logoInputRef = useRef(null);
+
+  function handleLogoUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => onStoreLogoChange(reader.result);
+    reader.readAsDataURL(file);
+  }
+
   return (
     <div className="container growth-tab">
       {!canBuy && (
         <div className="growth-locked-banner">Changes available between Day 7 and Day 1.</div>
       )}
+
+      {/* ── Store Identity ── */}
+      <h3 className="upgrade-section-header">Store Identity</h3>
+      <div className="store-identity-card card">
+        <div className="store-identity-row">
+          <div className="store-logo-upload" onClick={() => logoInputRef.current?.click()}>
+            <div className="store-logo-circle">
+              {storeLogo
+                ? <img src={storeLogo} alt="logo" className="store-logo-img" />
+                : <span className="store-logo-placeholder">👟</span>}
+            </div>
+            <input ref={logoInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleLogoUpload} />
+            <span className="store-logo-hint">Tap to change</span>
+          </div>
+          <div className="store-identity-fields">
+            <div className="store-field">
+              <label className="store-field-label">Store Name</label>
+              <input
+                className="store-field-input"
+                value={storeName}
+                onChange={e => onStoreNameChange(e.target.value)}
+                placeholder="Sole Proprietor"
+                maxLength={32}
+              />
+            </div>
+            <div className="store-field">
+              <label className="store-field-label">Social Handle</label>
+              <div className="store-handle-wrap">
+                <span className="store-handle-at">@</span>
+                <input
+                  className="store-field-input store-handle-input"
+                  value={storeHandle}
+                  onChange={e => onStoreHandleChange(e.target.value.replace(/[^a-zA-Z0-9_.]/g, ""))}
+                  placeholder="sole_prop"
+                  maxLength={30}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* ── Permanent Upgrades ── */}
       <h3 className="upgrade-section-header">Permanent Upgrades</h3>

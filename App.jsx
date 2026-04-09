@@ -79,6 +79,9 @@ export default function App() {
   const [keyMasterShoes,   setKeyMasterShoes]   = useState([]);
   // keyMasterShoe: { shoeId, brand, model, colorway, size, totalEarned }
   const [endOfDayKm,       setEndOfDayKm]       = useState({ results: [], income: 0 });
+  const [storeName,        setStoreName]        = useState(() => localStorage.getItem("storeName") ?? "Sole Proprietor");
+  const [storeHandle,      setStoreHandle]      = useState(() => localStorage.getItem("storeHandle") ?? "sole_prop");
+  const [storeLogo,        setStoreLogo]        = useState(() => localStorage.getItem("storeLogo") ?? null);
   const [user,             setUser]             = useState(null);
   const [authLoading,      setAuthLoading]      = useState(true);
   const [saveSlots,        setSaveSlots]        = useState([]);
@@ -107,6 +110,7 @@ export default function App() {
     releaseCalendar,
     bailoutContext, recentReleaseIds, hoursLeft, fakesReceived,
     featuredShoes, adActive, upgrades, keyMasterShoes,
+    storeName, storeHandle, storeLogo,
   };
 
   // ── Auth session ───────────────────────────────────────────────────────────
@@ -270,6 +274,9 @@ export default function App() {
     setAdActive(s.adActive ?? false);
     setUpgrades(s.upgrades ?? { storagePlus50: false, storagePlus100: false, authTier: "none", hasMarketing: false, hasKeyMaster: false });
     setKeyMasterShoes(s.keyMasterShoes ?? []);
+    if (s.storeName)   setStoreName(s.storeName);
+    if (s.storeHandle) setStoreHandle(s.storeHandle);
+    if (s.storeLogo)   setStoreLogo(s.storeLogo);
     setShowGuide(false); // returning players don't need the guide
   }
 
@@ -288,6 +295,7 @@ export default function App() {
         releaseCalendar,
         bailoutContext, recentReleaseIds, hoursLeft, fakesReceived,
         featuredShoes, adActive, upgrades, keyMasterShoes,
+        storeName, storeHandle, storeLogo,
       },
       saved_at: savedAt,
     }).eq("id", currentSaveId).then(() => {
@@ -296,6 +304,21 @@ export default function App() {
       ));
     });
   }, [phase, day]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Auto-save store identity on change ────────────────────────────────────
+  useEffect(() => {
+    if (storeName) localStorage.setItem("storeName", storeName);
+    if (storeHandle) localStorage.setItem("storeHandle", storeHandle);
+    if (storeLogo) localStorage.setItem("storeLogo", storeLogo);
+    else localStorage.removeItem("storeLogo");
+
+    if (!user || authLoading || !currentSaveId) return;
+    const snap = stateSnapshotRef.current;
+    supabase.from("game_saves").update({
+      state: { ...snap },
+      saved_at: new Date().toISOString(),
+    }).eq("id", currentSaveId);
+  }, [storeName, storeHandle, storeLogo, currentSaveId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── End of day → between (or bailout) ─────────────────────────────────────
   function handleGoToBetween(kmBonusCash = 0) {
@@ -665,7 +688,9 @@ export default function App() {
     return (
       <PhotoPostScreen
         inventory={inventory}
-        day={day}
+        day={fmtDay(day)}
+        storeHandle={storeHandle}
+        storeLogo={storeLogo}
         onPost={(featured) => handleStartNextDay(featured)}
         onSkip={() => handleStartNextDay([])}
       />
@@ -683,7 +708,7 @@ export default function App() {
       <div>
         <div className="top-bar">
           <div className="top-bar-left">
-            <span className="top-bar-brand">SOLE PROPRIETOR</span>
+            <span className="top-bar-brand">{storeName}</span>
             <span className="top-bar-day">{fmtDay(day)}</span>
           </div>
           <div className="top-bar-right">
@@ -743,6 +768,12 @@ export default function App() {
             phase={phase}
             day={day}
             onBuyUpgrade={handleBuyUpgrade}
+            storeName={storeName}
+            storeHandle={storeHandle}
+            storeLogo={storeLogo}
+            onStoreNameChange={setStoreName}
+            onStoreHandleChange={setStoreHandle}
+            onStoreLogoChange={setStoreLogo}
           />
         )}
 
@@ -752,7 +783,7 @@ export default function App() {
           </button>
           {isWeekBoundary && (
             <button className={betweenTab === "growth" ? "active" : ""} onClick={() => setTab("growth")}>
-              Growth
+              Store
             </button>
           )}
         </div>
@@ -795,7 +826,7 @@ export default function App() {
     <div>
       <div className="top-bar">
         <div className="top-bar-left">
-          <span className="top-bar-brand">SOLE PROPRIETOR</span>
+          <span className="top-bar-brand">{storeName}</span>
           <span className="top-bar-day">{fmtDay(day)}</span>
         </div>
         <div className="top-bar-right">
@@ -872,6 +903,12 @@ export default function App() {
           phase={phase}
           day={day}
           onBuyUpgrade={handleBuyUpgrade}
+          storeName={storeName}
+          storeHandle={storeHandle}
+          storeLogo={storeLogo}
+          onStoreNameChange={setStoreName}
+          onStoreHandleChange={setStoreHandle}
+          onStoreLogoChange={setStoreLogo}
         />
       )}
 
@@ -905,7 +942,7 @@ export default function App() {
           Expenses
         </button>
         <button className={tab === "growth"       ? "active" : ""} onClick={() => setTab("growth")}>
-          Growth
+          Store
         </button>
       </div>
 

@@ -114,7 +114,7 @@ function PickerSheet({ inventory, slots, onSelect, onClose }) {
   );
 }
 
-export default function PhotoPostScreen({ inventory, onPost, onSkip, day }) {
+export default function PhotoPostScreen({ inventory, onPost, onSkip, day, storeHandle, storeLogo }) {
   const [slots,      setSlots]      = useState(Array(9).fill(null));
   const [activeSlot, setActiveSlot] = useState(null);
   const [caption,    setCaption]    = useState(() => CAPTIONS[Math.floor(Math.random() * CAPTIONS.length)]);
@@ -158,10 +158,14 @@ export default function PhotoPostScreen({ inventory, onPost, onSkip, day }) {
 
         {/* IG header */}
         <div className="photo-ig-header">
-          <div className="photo-ig-avatar">👟</div>
+          <div className="photo-ig-avatar">
+            {storeLogo
+              ? <img src={storeLogo} alt="logo" className="photo-ig-logo" />
+              : "👟"}
+          </div>
           <div>
-            <div className="photo-ig-handle">@sole_prop</div>
-            <div className="photo-ig-day">Day {day}</div>
+            <div className="photo-ig-handle">@{storeHandle || "sole_prop"}</div>
+            <div className="photo-ig-day">{day}</div>
           </div>
         </div>
 
