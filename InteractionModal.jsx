@@ -30,17 +30,24 @@ function ProfitBadge({ pct }) {
   );
 }
 
+const TREND_EMOJI = { up: "📈", neutral: "➖", down: "📉" };
+
+function trendEmoji(brand, brandTrends) {
+  const dir = brandTrends?.[brand]?.direction;
+  return dir ? ` ${TREND_EMOJI[dir]}` : "";
+}
+
 export default function InteractionModal({
   customer,
   inventory,
   dailyMarkets,
+  brandTrends,
   cash,
   inventoryCount,
   inventoryCap = 50,
   hoursLeft,
   authTier,
   onTransaction,
-  onClose,
 }) {
   const { type, personality, shoe, size, marketRange } = customer;
   const traits = PERSONALITIES[personality];
@@ -385,7 +392,7 @@ export default function InteractionModal({
             <div className="multi-item-list">
               {customerItems.map((ci, k) => (
                 <div key={k} className="multi-item-row">
-                  <span className="multi-item-name">{ci.shoe.brand} {ci.shoe.model} — {ci.shoe.colorway}</span>
+                  <span className="multi-item-name">{ci.shoe.brand} {ci.shoe.model} — {ci.shoe.colorway}{trendEmoji(ci.shoe.brand, brandTrends)}</span>
                   <span className="multi-item-size">Sz {ci.size}</span>
                 </div>
               ))}
@@ -394,7 +401,7 @@ export default function InteractionModal({
         ) : (
           <>
             <ShoeImage shoeId={shoe.id} />
-            <p className="modal-shoe-name">{shoe.brand} {shoe.model} — {shoe.colorway}</p>
+            <p className="modal-shoe-name">{shoe.brand} {shoe.model} — {shoe.colorway}{trendEmoji(shoe.brand, brandTrends)}</p>
             <p className="modal-size">Size {size}</p>
           </>
         )}
@@ -519,7 +526,7 @@ export default function InteractionModal({
               const inStock = ci.inventoryItem && !ci.inventoryItem.isFake;
               return (
                 <div key={k} className="multi-item-row">
-                  <span className="multi-item-name">{ci.shoe.brand} {ci.shoe.model} — {ci.shoe.colorway}</span>
+                  <span className="multi-item-name">{ci.shoe.brand} {ci.shoe.model} — {ci.shoe.colorway}{trendEmoji(ci.shoe.brand, brandTrends)}</span>
                   <span className="multi-item-size">Sz {ci.size}</span>
                   <span className={`multi-item-status ${inStock ? "in" : "out"}`}>{inStock ? `$${ci.inventoryItem.listPrice}` : "Out of stock"}</span>
                 </div>
@@ -580,7 +587,7 @@ export default function InteractionModal({
     return (
       <div className="modal-section">
         <ShoeImage shoeId={shoe.id} />
-        <p className="modal-shoe-name">{shoe.brand} {shoe.model} — {shoe.colorway}</p>
+        <p className="modal-shoe-name">{shoe.brand} {shoe.model} — {shoe.colorway}{trendEmoji(shoe.brand, brandTrends)}</p>
         <p className="modal-size">Size {size}</p>
 
         <div className="price-grid">
@@ -659,7 +666,7 @@ export default function InteractionModal({
             <div className="multi-item-list">
               {customerItems.map((ci, k) => (
                 <div key={k} className="multi-item-row">
-                  <span className="multi-item-name">{ci.shoe.brand} {ci.shoe.model} — {ci.shoe.colorway}</span>
+                  <span className="multi-item-name">{ci.shoe.brand} {ci.shoe.model} — {ci.shoe.colorway}{trendEmoji(ci.shoe.brand, brandTrends)}</span>
                   <span className="multi-item-size">Sz {ci.size}</span>
                   <span className="multi-item-mkt">${ci.marketRange.low}–${ci.marketRange.high}</span>
                 </div>
@@ -669,7 +676,7 @@ export default function InteractionModal({
         ) : (
           <>
             <ShoeImage shoeId={shoe.id} />
-            <p className="modal-shoe-name">{shoe.brand} {shoe.model} — {shoe.colorway}</p>
+            <p className="modal-shoe-name">{shoe.brand} {shoe.model} — {shoe.colorway}{trendEmoji(shoe.brand, brandTrends)}</p>
             <p className="modal-size">Size {size}</p>
           </>
         )}
@@ -729,7 +736,7 @@ export default function InteractionModal({
         <div className="multi-item-list">
           {customerItems.map((ci, k) => (
             <div key={k} className="multi-item-row">
-              <span className="multi-item-name">{ci.shoe.brand} {ci.shoe.model} — {ci.shoe.colorway}</span>
+              <span className="multi-item-name">{ci.shoe.brand} {ci.shoe.model} — {ci.shoe.colorway}{trendEmoji(ci.shoe.brand, brandTrends)}</span>
               <span className="multi-item-size">Sz {ci.size}</span>
               <span className="multi-item-mkt">~${ci.marketRange.mid}</span>
             </div>
@@ -740,23 +747,29 @@ export default function InteractionModal({
       <div>
         <ShoeImage shoeId={shoe.id} />
         <div className="trade-summary-label">They're bringing</div>
-        <div className="trade-summary-shoe">{shoe.brand} {shoe.model}</div>
+        <div className="trade-summary-shoe">{shoe.brand} {shoe.model}{trendEmoji(shoe.brand, brandTrends)}</div>
         <div className="trade-summary-mkt">{shoe.colorway} · Sz {size} · ${mktLow}–${mktHigh}</div>
       </div>
     );
 
+    const theyWantSection = (
+      <div>
+        <ShoeImage shoeId={customer.wantedShoe.id} />
+        <div className="trade-summary-label">They want</div>
+        <div className="trade-summary-shoe">{customer.wantedShoe.brand} {customer.wantedShoe.model}{trendEmoji(customer.wantedShoe.brand, brandTrends)}</div>
+        <div className="trade-summary-mkt">{customer.wantedShoe.colorway} · Sz {customer.wantedSize} · ~${wantedMarket}</div>
+      </div>
+    );
+
+    const summaryCls = `trade-summary${isMultiItem ? " trade-summary--stacked" : ""}`;
+
     if (!wantedItem) {
       return (
         <div className="modal-section">
-          <div className="trade-summary">
+          <div className={summaryCls}>
             {theyBringingSection}
             <div className="trade-arrow">⇄</div>
-            <div>
-              <ShoeImage shoeId={customer.wantedShoe.id} />
-              <div className="trade-summary-label">They want</div>
-              <div className="trade-summary-shoe">{customer.wantedShoe.brand} {customer.wantedShoe.model}</div>
-              <div className="trade-summary-mkt">{customer.wantedShoe.colorway} · Sz {customer.wantedSize} · ~${wantedMarket}</div>
-            </div>
+            {theyWantSection}
           </div>
           <p className="no-stock-msg">You don't have what they want in stock.</p>
           <button className="secondary-btn" onClick={() =>
@@ -777,15 +790,10 @@ export default function InteractionModal({
     return (
       <div className="modal-section">
         {inspection === "close" && <div className="inspection-tag close">Closely Inspected</div>}
-        <div className="trade-summary">
+        <div className={summaryCls}>
           {theyBringingSection}
           <div className="trade-arrow">⇄</div>
-          <div>
-            <ShoeImage shoeId={customer.wantedShoe.id} />
-            <div className="trade-summary-label">They want</div>
-            <div className="trade-summary-shoe">{customer.wantedShoe.brand} {customer.wantedShoe.model}</div>
-            <div className="trade-summary-mkt">{customer.wantedShoe.colorway} · Sz {customer.wantedSize} · ~${wantedMarket}</div>
-          </div>
+          {theyWantSection}
         </div>
 
         <p className="trade-diff-hint">
@@ -821,7 +829,6 @@ export default function InteractionModal({
           <span className={`type-pill type-${type.toLowerCase()}`}>{type}</span>
           <span className="modal-subtitle">Customer #{customer.id}</span>
           <span className="modal-cash">💰 ${cash.toLocaleString()}</span>
-          <button className="close-btn" onClick={onClose}>✕</button>
         </div>
 
         {pendingResult ? (
