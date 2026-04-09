@@ -286,7 +286,7 @@ export default function InventoryTab({
                     disabled={atCap}
                     onClick={() => onFeatureToggle(item.shoeId, item.size)}
                   >
-                    {item.model} Sz {item.size}
+                    {item.model} {item.colorway} Sz {item.size}
                   </button>
                 );
               })}
