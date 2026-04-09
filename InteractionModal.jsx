@@ -199,10 +199,11 @@ export default function InteractionModal({
 
     if (num >= floorPrice) {
       if (isMultiItem) {
-        const adds = customerItems.map((ci, k) => ({
+        const totalMid = customerItems.reduce((s, ci) => s + ci.marketRange.mid, 0);
+        const adds = customerItems.map((ci) => ({
           shoeId: ci.shoe.id, brand: ci.shoe.brand, model: ci.shoe.model,
           colorway: ci.shoe.colorway, size: ci.size, quantity: 1,
-          avgPurchasePrice: Math.round(num / customerItems.length),
+          avgPurchasePrice: totalMid > 0 ? Math.round(num * (ci.marketRange.mid / totalMid)) : Math.round(num / customerItems.length),
           listPrice: ci.marketRange.mid,
           isFake: inspection === "quick" && ci.isFake,
           daysListed: 0,
@@ -286,10 +287,12 @@ export default function InteractionModal({
     const maxCashAdj = wantedMarket - theirMarket * traits.sellFloorMult;
 
     if (cashAdj <= maxCashAdj) {
+      const effectiveCost = Math.max(0, wantedMarket - cashAdj);
+      const totalTheirMid = customerItems.reduce((s, ci) => s + ci.marketRange.mid, 0);
       const adds = customerItems.map(ci => ({
         shoeId: ci.shoe.id, brand: ci.shoe.brand, model: ci.shoe.model,
         colorway: ci.shoe.colorway, size: ci.size, quantity: 1,
-        avgPurchasePrice: Math.max(0, Math.round((theirMarket - cashAdj) / customerItems.length)),
+        avgPurchasePrice: totalTheirMid > 0 ? Math.round(effectiveCost * (ci.marketRange.mid / totalTheirMid)) : Math.round(effectiveCost / customerItems.length),
         listPrice: ci.marketRange.mid,
         isFake: inspection === "quick" && ci.isFake,
         daysListed: 0,
