@@ -129,7 +129,7 @@ function ShoeThumb({ shoeId, size = 48 }) {
   );
 }
 
-function CollagePreview({ slots, onRemove }) {
+function CollagePreview({ slots }) {
   const filled = slots.filter(Boolean);
   const count  = filled.length;
 
@@ -153,7 +153,6 @@ function CollagePreview({ slots, onRemove }) {
           key={`${item.shoeId}-${item.size}`}
           className="photo-collage-cell"
           style={{ gridArea: AREA_KEYS[i] }}
-          onClick={() => onRemove(i)}
         >
           <img
             src={shoeImageUrl(item.shoeId)}
@@ -161,7 +160,6 @@ function CollagePreview({ slots, onRemove }) {
             className="photo-collage-img"
             onError={e => { e.target.style.display = "none"; }}
           />
-          <div className="photo-collage-remove">✕</div>
         </div>
       ))}
     </div>
@@ -227,12 +225,7 @@ export default function PhotoPostScreen({ inventory, onPost, onSkip, day, storeH
     setActiveSlot(null);
   }
 
-  function handleRemoveFromCollage(filledIndex) {
-    const item = filled[filledIndex];
-    setSlots(prev => prev.map(s => (s && s.shoeId === item.shoeId && s.size === item.size) ? null : s));
-  }
-
-  function handleShuffleCaption() {
+function handleShuffleCaption() {
     const others = CAPTIONS.filter(c => c !== caption);
     setCaption(others[Math.floor(Math.random() * others.length)]);
   }
@@ -259,7 +252,7 @@ export default function PhotoPostScreen({ inventory, onPost, onSkip, day, storeH
         </div>
 
         {/* Collage preview */}
-        <CollagePreview slots={slots} onRemove={handleRemoveFromCollage} />
+        <CollagePreview slots={slots} />
 
         {/* Caption */}
         <div className="photo-caption-row">
