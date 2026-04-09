@@ -271,8 +271,8 @@ export default function InventoryTab({
                 <div className="marketing-card-title">Targeted Ad — "We Want Your Shoes!"</div>
                 <div className="marketing-card-desc">
                   {adActive
-                    ? "Active — tomorrow's lineup flips to 5 buyers, 15 sellers, 10 traders."
-                    : "Flips tomorrow's customer mix: 5 buyers, 15 sellers, 10 traders."}
+                    ? "Active — tomorrow's seller and trader traffic will be doubled."
+                    : "Doubles tomorrow's seller and trader foot traffic."}
                 </div>
               </div>
               <span className="marketing-card-badge paid-badge">$100</span>

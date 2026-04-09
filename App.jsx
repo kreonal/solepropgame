@@ -23,12 +23,15 @@ import {
   advanceBrandTrends,
 } from "./data";
 
-const BAILOUT_INTEREST  = 0.30;
 const STARTING_CASH     = 12000;
 const LOAN_AMOUNT       = 12000;
-const WEEKLY_LOAN       = 1500;
+const INITIAL_WEEKLY_LOAN = 1500;
 const WEEKLY_RENT       = 750;
 const WEEKLY_UTIL       = 250;
+const BAILOUT_SHORT_WEEKS = 4;
+const BAILOUT_SHORT_RATE  = 0.20;
+const BAILOUT_LONG_WEEKS  = 8;
+const BAILOUT_LONG_RATE   = 0.35;
 export const INVENTORY_CAP = 50;
 
 function fmtDay(day) {
@@ -63,6 +66,7 @@ export default function App() {
   const [raffleReleases,   setRaffleReleases]   = useState([]);
   const [rafflesDoneForWeek, setRafflesDoneForWeek] = useState(0);
   const [releaseCalendar,  setReleaseCalendar]  = useState({});
+  const [weeklyLoan,       setWeeklyLoan]       = useState(INITIAL_WEEKLY_LOAN);
   const [bailoutContext,   setBailoutContext]   = useState(null);
   const [recentReleaseIds, setRecentReleaseIds] = useState([]);
   const [hoursLeft,        setHoursLeft]        = useState(10);
@@ -92,7 +96,8 @@ export default function App() {
   const prevSaveIdRef = useRef(null);
   const isPasswordRecoveryRef = useRef(false);
 
-  const inventoryCount = inventory.reduce((s, i) => s + i.quantity, 0);
+  const inventoryCount  = inventory.reduce((s, i) => s + i.quantity, 0);
+  const overallProfit   = cash - loanBalance;
   const effectiveInventoryCap = INVENTORY_CAP
     + (upgrades.storagePlus50  ? 50  : 0)
     + (upgrades.storagePlus100 ? 100 : 0);
@@ -103,7 +108,7 @@ export default function App() {
     return sum + sel.release.retail; // raffle: assume win
   }, 0);
   const projectedWeeklyTotal = WEEKLY_RENT + WEEKLY_UTIL
-    + (loanBalance > 0 ? WEEKLY_LOAN : 0)
+    + (loanBalance > 0 ? weeklyLoan : 0)
     + (upgrades.authTier === "employee" ? 700 : 0)
     + tentativeCost;
 
@@ -112,7 +117,7 @@ export default function App() {
   stateSnapshotRef.current = {
     version: 2,
     phase, tab, dailyMarkets, prevDailyMarkets, brandTrends,
-    cash, loanBalance, inventory, day, customers, transactions,
+    cash, loanBalance, weeklyLoan, inventory, day, customers, transactions,
     missedDemand, expenseLog, raffleReleases, rafflesDoneForWeek,
     releaseCalendar,
     bailoutContext, recentReleaseIds, hoursLeft, fakesReceived,
@@ -215,7 +220,7 @@ export default function App() {
       version: 2,
       phase: "day", tab: "customers",
       dailyMarkets: markets, prevDailyMarkets: null, brandTrends: trends,
-      cash: STARTING_CASH, loanBalance: LOAN_AMOUNT,
+      cash: STARTING_CASH, loanBalance: LOAN_AMOUNT, weeklyLoan: INITIAL_WEEKLY_LOAN,
       inventory: [], day: 1, customers,
       transactions: [], missedDemand: [], expenseLog: [],
       raffleReleases: [], rafflesDoneForWeek: 0,
@@ -235,6 +240,7 @@ export default function App() {
     setBrandTrends(s.brandTrends);
     setCash(s.cash);
     setLoanBalance(s.loanBalance);
+    setWeeklyLoan(s.weeklyLoan ?? INITIAL_WEEKLY_LOAN);
     setInventory(s.inventory);
     setDay(s.day);
     setCustomers(s.customers);
@@ -265,6 +271,7 @@ export default function App() {
     if (s.brandTrends)              setBrandTrends(s.brandTrends);
     if (s.cash             != null) setCash(s.cash);
     if (s.loanBalance      != null) setLoanBalance(s.loanBalance);
+    setWeeklyLoan(s.weeklyLoan ?? INITIAL_WEEKLY_LOAN);
     if (s.inventory)                setInventory(s.inventory);
     if (s.day              != null) setDay(s.day);
     if (s.customers)                setCustomers(s.customers);
@@ -349,7 +356,7 @@ export default function App() {
       const entries = [];
 
       if (newLoan > 0) {
-        const payment = Math.min(WEEKLY_LOAN, newLoan);
+        const payment = Math.min(weeklyLoan, newLoan);
         newLoan = Math.max(0, newLoan - payment);
         newCash -= payment;
         entries.push({ week: weekNum, label: "Loan Repayment", amount: -payment });
@@ -361,12 +368,9 @@ export default function App() {
       newCash -= WEEKLY_UTIL;
       entries.push({ week: weekNum, label: "Utilities", amount: -WEEKLY_UTIL });
 
-      if (upgrades.authTier === "app") {
-        newCash -= 100;
-        entries.push({ week: weekNum, label: "Auth App", amount: -100 });
-      } else if (upgrades.authTier === "employee") {
-        newCash -= 1500;
-        entries.push({ week: weekNum, label: "Auth Employee", amount: -1500 });
+      if (upgrades.authTier === "employee") {
+        newCash -= 700;
+        entries.push({ week: weekNum, label: "Auth Employee", amount: -700 });
       }
       if (upgrades.hasMarketing) {
         newCash -= 1500;
@@ -384,11 +388,24 @@ export default function App() {
     setDay(d => d + 1);
 
     if (newCash < 0) {
-      const shortfall   = Math.abs(newCash);
-      const bailoutLoan = Math.round(shortfall * (1 + BAILOUT_INTEREST));
-      setCash(0);
-      setLoanBalance(newLoan + bailoutLoan);
-      setBailoutContext({ shortfall, bailoutLoan, newLoanBalance: newLoan + bailoutLoan });
+      const deficit    = Math.abs(newCash);
+      const totalLoan  = newLoan + deficit * 2;
+      const shortOpt   = {
+        weeks: BAILOUT_SHORT_WEEKS,
+        rate:  BAILOUT_SHORT_RATE,
+        total: Math.round(totalLoan * (1 + BAILOUT_SHORT_RATE)),
+        weekly: Math.round(totalLoan * (1 + BAILOUT_SHORT_RATE) / BAILOUT_SHORT_WEEKS),
+      };
+      const longOpt    = {
+        weeks: BAILOUT_LONG_WEEKS,
+        rate:  BAILOUT_LONG_RATE,
+        total: Math.round(totalLoan * (1 + BAILOUT_LONG_RATE)),
+        weekly: Math.round(totalLoan * (1 + BAILOUT_LONG_RATE) / BAILOUT_LONG_WEEKS),
+      };
+      // Cash after bailout = deficit (double deficit minus old loan repayment)
+      setCash(deficit);
+      setLoanBalance(0); // will be set on term selection
+      setBailoutContext({ deficit, oldLoan: newLoan, totalLoan, shortOpt, longOpt });
       setPhase("bailout");
     } else {
       setCash(newCash);
@@ -434,7 +451,9 @@ export default function App() {
     setPhase("between");
   }
 
-  function handleExtendLoan() {
+  function handleExtendLoan(opt) {
+    setLoanBalance(opt.total);
+    setWeeklyLoan(opt.weekly);
     setBailoutContext(null);
     setTab("inventory");
     setPhase("between");
@@ -667,10 +686,11 @@ export default function App() {
   if (phase === "bailout") {
     return (
       <BailoutScreen
-        shortfall={bailoutContext.shortfall}
-        bailoutLoan={bailoutContext.bailoutLoan}
-        newLoanBalance={bailoutContext.newLoanBalance}
-        weeklyPayment={WEEKLY_LOAN}
+        deficit={bailoutContext.deficit}
+        oldLoan={bailoutContext.oldLoan}
+        totalLoan={bailoutContext.totalLoan}
+        shortOpt={bailoutContext.shortOpt}
+        longOpt={bailoutContext.longOpt}
         day={fmtDay(day)}
         onExtend={handleExtendLoan}
         onClose={handleCloseShop}
@@ -780,6 +800,10 @@ export default function App() {
             <span className="top-bar-day">{fmtDay(day)}</span>
           </div>
           <div className="top-bar-right">
+            <span className={`top-bar-stat${overallProfit < 0 ? " inv-warn" : ""}`}>
+              <span className="top-bar-stat-label">P&L</span>
+              {overallProfit >= 0 ? "+" : ""}${overallProfit.toLocaleString()}
+            </span>
             <span className="top-bar-stat">
               <span className="top-bar-stat-label">Cash</span>
               ${cash.toLocaleString()}
@@ -915,6 +939,10 @@ export default function App() {
           <span className="top-bar-day">{fmtDay(day)}</span>
         </div>
         <div className="top-bar-right">
+          <span className={`top-bar-stat${overallProfit < 0 ? " inv-warn" : ""}`}>
+            <span className="top-bar-stat-label">P&L</span>
+            {overallProfit >= 0 ? "+" : ""}${overallProfit.toLocaleString()}
+          </span>
           <span className="top-bar-stat">
             <span className="top-bar-stat-label">Cash</span>
             ${cash.toLocaleString()}
@@ -1006,7 +1034,7 @@ export default function App() {
           loanBalance={loanBalance}
           expenseLog={expenseLog}
           day={day}
-          weeklyLoan={WEEKLY_LOAN}
+          weeklyLoan={weeklyLoan}
           weeklyRent={WEEKLY_RENT}
           weeklyUtil={WEEKLY_UTIL}
           upgrades={upgrades}

@@ -1620,9 +1620,9 @@ button:active { transform: scale(0.98); }
   line-height: 1.6;
 }
 
-.bailout-terms {
+.bailout-summary {
   text-align: left;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 .bailout-term-row {
   display: flex;
@@ -1639,6 +1639,60 @@ button:active { transform: scale(0.98); }
   height: 1px;
   background: var(--border);
   margin: 4px 0;
+}
+
+.bailout-terms-header {
+  text-align: left;
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+}
+
+.bailout-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.bailout-option {
+  text-align: left;
+  cursor: pointer;
+  border: 2px solid var(--border);
+  transition: border-color 0.15s;
+}
+.bailout-option-selected {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px var(--blue-bg);
+}
+.bailout-option-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.bailout-option-label {
+  font-size: 14px;
+  font-weight: 700;
+}
+.bailout-option-sub {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+.bailout-option-rows { display: flex; flex-direction: column; gap: 4px; }
+.bailout-radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  flex-shrink: 0;
+}
+.bailout-radio.selected {
+  border-color: var(--blue);
+  background: var(--blue);
 }
 
 .bailout-actions {
