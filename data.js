@@ -11,7 +11,7 @@ export const CATALOG = [
   { id: "aj1-ow-chicago",          brand: "Jordan", style: "Jordan 1", model: "Air Jordan 1 Retro High OG", colorway: "Off-White Chicago",    baseMarket: 3200, isGrail: true },
   { id: "aj1-ow-unc",              brand: "Jordan", style: "Jordan 1", model: "Air Jordan 1 Retro High OG", colorway: "Off-White UNC",        baseMarket: 2100, isGrail: true },
   { id: "aj1-ow-alaska",           brand: "Jordan", style: "Jordan 1", model: "Air Jordan 1 Retro High OG", colorway: "Off-White Alaska",     baseMarket: 2050, isGrail: true },
-  { id: "aj1-unc-toe",             brand: "Jordan", style: "Jordan 1", model: "Air Jordan 1 Retro High OG", colorway: "UNC Toe",              baseMarket: 2500,  retail: 180 },
+  { id: "aj1-unc-toe",             brand: "Jordan", style: "Jordan 1", model: "Air Jordan 1 Retro High OG", colorway: "UNC Toe",              baseMarket: 250,  retail: 180 },
   { id: "aj1-travis-high",         brand: "Jordan", style: "Jordan 1", model: "Air Jordan 1 Retro High OG", colorway: "Travis Scott",         baseMarket: 1200, isGrail: true },
   { id: "aj1-union-storm-blue",    brand: "Jordan", style: "Jordan 1", model: "Air Jordan 1 Retro High OG", colorway: "Union Storm Blue",     baseMarket: 1500,  isGrail: true },
   { id: "aj1-union-black-toe",     brand: "Jordan", style: "Jordan 1", model: "Air Jordan 1 Retro High OG", colorway: "Union Black Toe",      baseMarket: 1200,  isGrail: true },
