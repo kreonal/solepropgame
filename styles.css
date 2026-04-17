@@ -1924,6 +1924,35 @@ button:active { transform: scale(0.98); }
 .inspection-tag.close { background: var(--green-bg); color: var(--green); }
 .inspection-tag.quick { background: var(--amber-bg); color: var(--amber); }
 
+.gate-mkt-range {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-3);
+  margin: 2px 0 0;
+}
+.gate-trade-wants {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: var(--bg-2);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--accent);
+}
+.gate-trade-wants-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.gate-trade-wants-shoe {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
 /* ── Fakes alert (EndOfDayScreen) ────────────────────────────────────── */
 .fakes-alert {
   background: var(--red-bg);

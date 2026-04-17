@@ -389,11 +389,14 @@ export default function InteractionModal({
                 const itemAsk = type === "SELL"
                   ? Math.round(ci.marketRange.mid * traits.sellAskMult)
                   : ci.marketRange.mid;
+                const ciLow  = Math.round(ci.marketRange.low);
+                const ciHigh = Math.round(ci.marketRange.high);
                 return (
                   <div key={k} className="multi-item-row">
                     <span className="multi-item-name">{ci.shoe.brand} {ci.shoe.model} — {ci.shoe.colorway}{trendEmoji(ci.shoe.brand, brandTrends)}</span>
                     <span className="multi-item-size">Sz {ci.size}</span>
                     <span className="multi-item-mkt">{type === "SELL" ? "Asking" : "Valued"} ${itemAsk}</span>
+                    <span className="multi-item-mkt gate-mkt-range">Mkt ${ciLow}–${ciHigh}</span>
                   </div>
                 );
               })}
@@ -409,7 +412,14 @@ export default function InteractionModal({
             <p className="gate-ask-single">
               {type === "SELL" ? `Asking $${initAsk}` : `Valued ~$${mktMid}`}
             </p>
+            <p className="gate-mkt-range">Mkt ${mktLow}–${mktHigh}</p>
           </>
+        )}
+        {type === "TRADE" && customer.wantedShoe && (
+          <div className="gate-trade-wants">
+            <span className="gate-trade-wants-label">Looking for</span>
+            <span className="gate-trade-wants-shoe">{customer.wantedShoe.brand} {customer.wantedShoe.model} — {customer.wantedShoe.colorway}{trendEmoji(customer.wantedShoe.brand, brandTrends)} Sz {customer.wantedSize}</span>
+          </div>
         )}
         <p className="inspection-prompt">How do you want to handle this?</p>
         <div className="inspection-options">
