@@ -113,75 +113,46 @@ export default function InteractionModal({
   // Single-item compat
   const inventoryItem = buyItemsResolved[0]?.inventoryItem ?? null;
 
-  const [buyOfferInput, setBuyOfferInput] = useState(
-    isMultiItem ? String(totalListPrice) : (inventoryItem ? String(inventoryItem.listPrice) : "")
-  );
-  const [buyCounter, setBuyCounter] = useState(null);
-  const [buyRound,   setBuyRound]   = useState(0);
-  const [buyMsg,     setBuyMsg]     = useState("");
+  const [buyRound, setBuyRound] = useState(0);
 
-  function tryBuyPrice(price) {
-    const maxPrice = isMultiItem ? totalBuyMax : buyMaxPrice;
-    if (price <= maxPrice) {
-      if (isMultiItem) {
-        const removes = buyInStock.map(ci => ({ shoeId: ci.shoe.id, size: ci.size }));
-        const label = buyInStock.length === 1
-          ? `Sold ${buyInStock[0].shoe.brand} ${buyInStock[0].shoe.model} ${buyInStock[0].shoe.colorway} Sz ${buyInStock[0].size} for $${price}`
-          : `Sold ${buyInStock.length} items for $${price}`;
-        commitResult({
-          cashDelta: price,
-          inventoryRemoves: removes,
-          inventoryAdds: [],
-          outcome: `Sold $${price}`,
-          label,
-          timeCost: TIME_BUY,
-        });
-      } else {
-        commitResult({
-          cashDelta: price,
-          inventoryRemoves: [{ shoeId: shoe.id, size }],
-          inventoryAdds: [],
-          outcome: `Sold $${price}`,
-          label: `Sold ${shoe.brand} ${shoe.model} ${shoe.colorway} Sz ${size} for $${price}`,
-          timeCost: TIME_BUY,
-        });
-      }
-    } else if (traits.haggles && buyRound < traits.haggleRounds) {
-      setBuyCounter(maxPrice);
-      setBuyRound(r => r + 1);
-      setBuyMsg(`They counter at $${maxPrice}.`);
+  function calcOffer(maxPrice, round, totalRounds) {
+    if (totalRounds <= 1) return maxPrice;
+    const startFrac = 0.82;
+    const frac = startFrac + (1 - startFrac) * (round / (totalRounds - 1));
+    return Math.round(maxPrice * frac);
+  }
+  const currentOffer     = calcOffer(buyMaxPrice,   buyRound, traits.haggleRounds);
+  const currentOfferTotal = calcOffer(totalBuyMax,  buyRound, traits.haggleRounds);
+
+  function doBuySale(price) {
+    if (isMultiItem) {
+      const removes = buyInStock.map(ci => ({ shoeId: ci.shoe.id, size: ci.size }));
+      const label = buyInStock.length === 1
+        ? `Sold ${buyInStock[0].shoe.brand} ${buyInStock[0].shoe.model} ${buyInStock[0].shoe.colorway} Sz ${buyInStock[0].size} for $${price}`
+        : `Sold ${buyInStock.length} items for $${price}`;
+      commitResult({ cashDelta: price, inventoryRemoves: removes, inventoryAdds: [], outcome: `Sold $${price}`, label, timeCost: TIME_BUY });
     } else {
       commitResult({
-        cashDelta: 0, inventoryRemoves: [], inventoryAdds: [],
-        outcome: "Walked", label: `BUY customer walked — asked too much`,
+        cashDelta: price,
+        inventoryRemoves: [{ shoeId: shoe.id, size }],
+        inventoryAdds: [],
+        outcome: `Sold $${price}`,
+        label: `Sold ${shoe.brand} ${shoe.model} ${shoe.colorway} Sz ${size} for $${price}`,
         timeCost: TIME_BUY,
       });
     }
   }
 
-  function handleAcceptCounter() {
-    if (isMultiItem) {
-      const removes = buyInStock.map(ci => ({ shoeId: ci.shoe.id, size: ci.size }));
-      const label = buyInStock.length === 1
-        ? `Sold ${buyInStock[0].shoe.brand} ${buyInStock[0].shoe.model} ${buyInStock[0].shoe.colorway} Sz ${buyInStock[0].size} for $${buyCounter}`
-        : `Sold ${buyInStock.length} items for $${buyCounter}`;
-      commitResult({
-        cashDelta: buyCounter,
-        inventoryRemoves: removes,
-        inventoryAdds: [],
-        outcome: `Sold $${buyCounter}`,
-        label,
-        timeCost: TIME_BUY,
-      });
+  function handleRingUp() {
+    doBuySale(isMultiItem ? totalListPrice : inventoryItem.listPrice);
+  }
+
+
+  function handleDeclineOffer() {
+    if (buyRound + 1 < traits.haggleRounds) {
+      setBuyRound(r => r + 1);
     } else {
-      commitResult({
-        cashDelta: buyCounter,
-        inventoryRemoves: [{ shoeId: shoe.id, size }],
-        inventoryAdds: [],
-        outcome: `Sold $${buyCounter}`,
-        label: `Sold ${shoe.brand} ${shoe.model} ${shoe.colorway} Sz ${size} for $${buyCounter}`,
-        timeCost: TIME_BUY,
-      });
+      commitResult({ cashDelta: 0, inventoryRemoves: [], inventoryAdds: [], outcome: "Walked", label: `BUY customer walked — price too high`, timeCost: TIME_BUY });
     }
   }
 
@@ -527,9 +498,9 @@ export default function InteractionModal({
     }
 
     if (isMultiItem) {
-      const effectiveTotal = buyCounter ?? (Number(buyOfferInput) || totalListPrice);
+      const actionableTotal = traits.haggles ? currentOfferTotal : totalListPrice;
       const totalCost = buyInStock.reduce((sum, ci) => sum + ci.inventoryItem.avgPurchasePrice, 0);
-      const profitPct = totalCost > 0 ? ((effectiveTotal - totalCost) / totalCost) * 100 : null;
+      const profitPct = totalCost > 0 ? ((actionableTotal - totalCost) / totalCost) * 100 : null;
 
       return (
         <div className="modal-section">
@@ -564,41 +535,26 @@ export default function InteractionModal({
             </div>
           </div>
           <ProfitBadge pct={profitPct} />
-          {buyCounter ? (
+          {traits.haggles ? (
             <>
-              <p className="counter-msg">{buyMsg}</p>
+              <p className="counter-msg">They offered ${currentOfferTotal}. Your list is ${totalListPrice}.</p>
               <div className="offer-row">
-                <button className="primary-btn" onClick={handleAcceptCounter}>Accept ${buyCounter}</button>
-                <button className="secondary-btn" onClick={() =>
-                  commitResult({ cashDelta: 0, inventoryRemoves: [], inventoryAdds: [], outcome: "Walked", label: `BUY customer walked after counter`, timeCost: TIME_BUY })
-                }>Decline (They Walk)</button>
+                <button className="primary-btn" onClick={() => doBuySale(currentOfferTotal)}>Accept ${currentOfferTotal}</button>
+                <button className="secondary-btn" onClick={handleDeclineOffer}>Reject (They Walk)</button>
               </div>
             </>
           ) : (
-            <>
-              {buyMsg && <p className="counter-msg">{buyMsg}</p>}
-              <div className="offer-row">
-                <button className="primary-btn" onClick={() => tryBuyPrice(totalListPrice)}>Ring Up (${totalListPrice})</button>
-              </div>
-              <div className="custom-offer-row">
-                <span>Custom total: $</span>
-                <input
-                  type="number"
-                  value={buyOfferInput}
-                  onChange={e => setBuyOfferInput(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && tryBuyPrice(Number(buyOfferInput))}
-                />
-                <button onClick={() => tryBuyPrice(Number(buyOfferInput))}>Offer</button>
-              </div>
-            </>
+            <div className="offer-row">
+              <button className="primary-btn" onClick={handleRingUp}>Ring Up (${totalListPrice})</button>
+            </div>
           )}
         </div>
       );
     }
 
     // Single-item BUY (original flow)
-    const effectivePrice = buyCounter ?? (Number(buyOfferInput) || inventoryItem.listPrice);
-    const profitPct = ((effectivePrice - inventoryItem.avgPurchasePrice) / inventoryItem.avgPurchasePrice) * 100;
+    const actionablePrice = traits.haggles ? currentOffer : inventoryItem.listPrice;
+    const profitPct = ((actionablePrice - inventoryItem.avgPurchasePrice) / inventoryItem.avgPurchasePrice) * 100;
 
     return (
       <div className="modal-section">
@@ -623,43 +579,18 @@ export default function InteractionModal({
 
         <ProfitBadge pct={profitPct} />
 
-        {buyCounter ? (
+        {traits.haggles ? (
           <>
-            <p className="counter-msg">{buyMsg}</p>
+            <p className="counter-msg">They offered ${currentOffer}. Your list is ${inventoryItem.listPrice}.</p>
             <div className="offer-row">
-              <button className="primary-btn" onClick={handleAcceptCounter}>
-                Accept ${buyCounter}
-              </button>
-              <button className="secondary-btn" onClick={() =>
-                commitResult({
-                  cashDelta: 0, inventoryRemoves: [], inventoryAdds: [],
-                  outcome: "Walked", label: `BUY customer walked after counter`,
-                  timeCost: TIME_BUY,
-                })
-              }>
-                Decline (They Walk)
-              </button>
+              <button className="primary-btn" onClick={() => doBuySale(currentOffer)}>Accept ${currentOffer}</button>
+              <button className="secondary-btn" onClick={handleDeclineOffer}>Reject (They Walk)</button>
             </div>
           </>
         ) : (
-          <>
-            {buyMsg && <p className="counter-msg">{buyMsg}</p>}
-            <div className="offer-row">
-              <button className="primary-btn" onClick={() => tryBuyPrice(inventoryItem.listPrice)}>
-                Ring Up (${inventoryItem.listPrice})
-              </button>
-            </div>
-            <div className="custom-offer-row">
-              <span>Custom: $</span>
-              <input
-                type="number"
-                value={buyOfferInput}
-                onChange={e => setBuyOfferInput(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && tryBuyPrice(Number(buyOfferInput))}
-              />
-              <button onClick={() => tryBuyPrice(Number(buyOfferInput))}>Offer</button>
-            </div>
-          </>
+          <div className="offer-row">
+            <button className="primary-btn" onClick={handleRingUp}>Ring Up (${inventoryItem.listPrice})</button>
+          </div>
         )}
       </div>
     );
